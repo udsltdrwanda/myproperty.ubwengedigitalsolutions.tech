@@ -90,9 +90,9 @@
         $monthlyBilling = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
             $query->where('landlord_id', $landlordId);
         })
-        ->selectRaw("DATE_FORMAT(created_at, '%b %Y') as month, SUM(amount) as total")
+        ->selectRaw("DATE_FORMAT(created_at, '%b %Y') as month, SUM(amount) as total, MIN(created_at) as sort_date")
         ->groupBy('month')
-        ->orderBy('created_at')
+        ->orderBy('sort_date')
         ->limit(6)
         ->get();
 
