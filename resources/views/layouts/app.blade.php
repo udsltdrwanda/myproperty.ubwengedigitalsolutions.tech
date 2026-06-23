@@ -102,6 +102,41 @@
         .nav-link:focus-visible {
             outline: 2px solid blue;
         }
+
+        /* UDS Brand Color Utilities */
+        .bg-uds-blue { background-color: #003b70 !important; }
+        .text-uds-blue { color: #003b70 !important; }
+        .bg-uds-orange { background-color: #f39200 !important; }
+        .text-uds-orange { color: #f39200 !important; }
+        .text-uds-navy { color: #0b2545 !important; }
+        .bg-uds-navy { background-color: #0b2545 !important; }
+
+        .hover\:bg-uds-blue:hover { background-color: #003b70 !important; }
+        .hover\:text-uds-blue:hover { color: #003b70 !important; }
+        .hover\:bg-uds-orange:hover { background-color: #f39200 !important; }
+        .hover\:text-uds-orange:hover { color: #f39200 !important; }
+        .hover\:text-white:hover { color: #ffffff !important; }
+
+        /* Responsive Fallback Utilities */
+        @media (min-width: 768px) {
+            .md\:flex-row { flex-direction: row !important; }
+            .md\:items-center { align-items: center !important; }
+            .md\:justify-between { justify-content: space-between !important; }
+            .md\:block { display: block !important; }
+            .md\:hidden { display: none !important; }
+            .md\:flex { display: flex !important; }
+            .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            .md\:text-left { text-align: left !important; }
+            .md\:text-right { text-align: right !important; }
+        }
+        @media (min-width: 1024px) {
+            .lg\:flex-row { flex-direction: row !important; }
+            .lg\:items-center { align-items: center !important; }
+            .lg\:justify-between { justify-content: space-between !important; }
+            .lg\:block { display: block !important; }
+            .lg\:hidden { display: none !important; }
+            .lg\:flex { display: flex !important; }
+        }
     </style>
 
     <!-- Styles -->

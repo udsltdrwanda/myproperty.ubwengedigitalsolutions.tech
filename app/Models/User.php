@@ -30,6 +30,18 @@ class User extends Authenticatable
         ];
     }
 
+    // Accessor for userRole (mapping to user_role in DB)
+    public function getUserRoleAttribute()
+    {
+        return $this->attributes['user_role'] ?? null;
+    }
+
+    // Mutator for userRole (mapping to user_role in DB)
+    public function setUserRoleAttribute($value)
+    {
+        $this->attributes['user_role'] = $value;
+    }
+
     // In the User model
     public function properties()
     {

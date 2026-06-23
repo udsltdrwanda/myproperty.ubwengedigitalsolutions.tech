@@ -1,149 +1,138 @@
-    <!-- Create/Edit Modal -->
+    {{-- ════ Create / Edit Modal ════ --}}
     @if ($isOpen)
-        <div
-            class="fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
-            <div class="relative w-full max-w-2xl mx-auto my-6">
-                <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-                    <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             style="background:rgba(11,37,69,0.55); backdrop-filter:blur(6px);">
+            <div class="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+                {{-- Sticky Header --}}
+                <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0"
+                     style="background:linear-gradient(135deg,#003b70,#0b2545);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl flex items-center justify-center" style="background:rgba(243,146,0,0.2);">
+                            <i class="fas fa-{{ $record_id ? 'edit' : 'user-plus' }} text-sm" style="color:#f39200;"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-extrabold text-white">{{ $record_id ? 'Edit Client' : 'Add New Client' }}</h3>
+                            <p class="text-[10px] font-semibold" style="color:rgba(255,255,255,0.5);">Fill in the client details below</p>
+                        </div>
+                    </div>
+                    <button wire:click="closeModal()"
+                        class="w-8 h-8 rounded-xl flex items-center justify-center transition"
+                        style="color:rgba(255,255,255,0.6); background:rgba(255,255,255,0.1);"
+                        onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
                 </div>
-                <div
-                    class="relative flex flex-col w-full bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none">
-                    <div
-                        class="flex items-start justify-between p-5 border-b border-solid rounded-t border-blueGray-200">
-                        <h3 class="text-xl font-semibold">
-                            {{ $tenant_id ? 'Edit Tenant' : 'Create New Tenant' }}
-                        </h3>
-                        <button wire:click="closeModal()"
-                            class="float-right p-1 ml-auto text-2xl font-semibold leading-none text-black bg-transparent border-0 outline-none focus:outline-none">
-                            <span class="block w-6 h-6 text-2xl">×</span>
-                        </button>
-                    </div>
-                    <div class="relative flex-auto p-6">
-                        <form>
-                            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                <div>
-                                    <label class="block mb-2 text-sm font-bold text-gray-700" for="tenant_id">
-                                        Tenant ID (16 characters) *
-                                    </label>
-                                    <input wire:model="tenant_id" id="tenant_id" type="number"
-                                        class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                                        maxlength="16"
-                                        oninput="if(this.value.length > 16) this.value = this.value.slice(0, 16);">
 
-                                    @error('tenant_id')
-                                        <span class="text-sm text-red-500">{{ $message ?? '' }}</span>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block mb-2 text-sm font-bold text-gray-700" for="tenant_name">
-                                        Tenant Name *
-                                    </label>
-                                    <input wire:model="tenant_name" id="tenant_name" type="text"
-                                        class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
-                                    @error('tenant_name')
-                                        <span class="text-sm text-red-500">{{ $message ?? '' }}</span>
-                                    @enderror
-                                </div>
+                {{-- Scrollable Body --}}
+                <div class="overflow-y-auto flex-1 p-6">
+                    @php
+                        $inputCls = "w-full px-3 py-2.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl transition duration-150 focus:outline-none";
+                        $labelCls = "block text-[10px] font-bold uppercase tracking-wider mb-1.5 text-slate-400";
+                    @endphp
 
-                                <div>
-                                    <label class="block mb-2 text-sm font-bold text-gray-700" for="phone">
-                                        Phone *
-                                    </label>
-                                    <input wire:model="phone" id="phone" type="text"
-                                        class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
-                                    @error('phone')
-                                        <span class="text-sm text-red-500">{{ $message ?? '' }}</span>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block mb-2 text-sm font-bold text-gray-700" for="email">
-                                        Email *
-                                    </label>
-                                    <input wire:model="email" id="email" type="email"
-                                        class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
-                                    @error('email')
-                                        <span class="text-sm text-red-500">{{ $message ?? '' }}</span>
-                                    @enderror
-                                </div>
-                                <div>
-                                    <label class="block mb-2 text-sm font-bold text-gray-700" for="company_name">
-                                        Company Name
-                                    </label>
-                                    <input wire:model="company_name" id="company_name" type="text"
-                                        class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline">
-                                </div>
-                                <div>
-                                    <label class="block mb-2 text-sm font-bold text-gray-700" for="company_tin">
-                                        Company TIN *
-                                    </label>
-                                    <input id="company_tin" name="company_tin" type="number"
-                                        class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"
-                                        maxlength="9"
-                                        oninput="if(this.value.length >9) this.value = this.value.slice(0, 9);">
-                                </div>
-                            </div>
-                            <div class="mt-4">
-                                <label class="block mb-2 text-sm font-bold text-gray-700" for="notes">
-                                    Notes
-                                </label>
-                                <textarea wire:model="notes" id="notes" rows="3"
-                                    class="w-full px-3 py-2 leading-tight text-gray-700 border rounded shadow appearance-none focus:outline-none focus:shadow-outline"></textarea>
-                            </div>
-                        </form>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {{-- Tenant ID --}}
+                        <div>
+                            <label class="{{ $labelCls }}"><i class="fas fa-id-card mr-1"></i> Tenant ID (16 digits) *</label>
+                            <input wire:model="tenant_id" type="number" maxlength="16"
+                                   oninput="if(this.value.length>16) this.value=this.value.slice(0,16);"
+                                   class="{{ $inputCls }}" placeholder="1234567890123456">
+                            @error('tenant_id') <span class="text-[10px] text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        {{-- Tenant Name --}}
+                        <div>
+                            <label class="{{ $labelCls }}"><i class="fas fa-user mr-1"></i> Full Name *</label>
+                            <input wire:model="tenant_name" type="text" class="{{ $inputCls }}" placeholder="e.g. Jean Claude">
+                            @error('tenant_name') <span class="text-[10px] text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        {{-- Phone --}}
+                        <div>
+                            <label class="{{ $labelCls }}"><i class="fas fa-phone mr-1"></i> Phone *</label>
+                            <input wire:model="phone" type="text" class="{{ $inputCls }}" placeholder="e.g. 0788000000">
+                            @error('phone') <span class="text-[10px] text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        {{-- Email --}}
+                        <div>
+                            <label class="{{ $labelCls }}"><i class="fas fa-envelope mr-1"></i> Email *</label>
+                            <input wire:model="email" type="email" class="{{ $inputCls }}" placeholder="e.g. name@example.com">
+                            @error('email') <span class="text-[10px] text-red-500 mt-1 block">{{ $message }}</span> @enderror
+                        </div>
+
+                        {{-- Company Name --}}
+                        <div>
+                            <label class="{{ $labelCls }}"><i class="fas fa-building mr-1"></i> Company Name</label>
+                            <input wire:model="company_name" type="text" class="{{ $inputCls }}" placeholder="Optional">
+                        </div>
+
+                        {{-- Company TIN --}}
+                        <div>
+                            <label class="{{ $labelCls }}"><i class="fas fa-receipt mr-1"></i> Company TIN</label>
+                            <input wire:model="company_tin" type="number" maxlength="9"
+                                   oninput="if(this.value.length>9) this.value=this.value.slice(0,9);"
+                                   class="{{ $inputCls }}" placeholder="9-digit TIN">
+                        </div>
                     </div>
-                    <div class="flex items-center justify-end p-6 border-t border-solid rounded-b border-blueGray-200">
-                        <button wire:click="closeModal()" type="button"
-                            class="px-6 py-2 mb-1 mr-1 text-sm font-bold text-red-500 uppercase transition-all duration-150 ease-linear outline-none background-transparent focus:outline-none">
-                            Cancel
-                        </button>
-                        <x-button2 type="submit" color="blue" action="store"
-                            class="px-6 py-2 mb-1 mr-1 text-sm font-bold text-white uppercase transition-all duration-150 ease-linear bg-green-500 rounded shadow outline-none active:bg-green-600 hover:shadow-lg focus:outline-none">
-                            Save Changes
-                        </x-button2>
+
+                    {{-- Notes --}}
+                    <div class="mt-4">
+                        <label class="{{ $labelCls }}"><i class="fas fa-sticky-note mr-1"></i> Notes</label>
+                        <textarea wire:model="notes" rows="3" class="{{ $inputCls }}" placeholder="Any additional notes…"></textarea>
                     </div>
+                </div>
+
+                {{-- Sticky Footer --}}
+                <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50/50 shrink-0">
+                    <button wire:click="closeModal()" type="button"
+                        class="px-5 py-2 text-xs font-bold border border-slate-200 rounded-xl text-slate-500 bg-white hover:bg-slate-100 transition duration-150">
+                        Cancel
+                    </button>
+                    <button wire:click="store()" type="button"
+                        class="px-5 py-2 text-xs font-bold text-white rounded-xl transition duration-150 shadow-md"
+                        style="background:linear-gradient(135deg,#003b70,#0b2545);">
+                        <i class="fas fa-save mr-1.5"></i>
+                        {{ $record_id ? 'Update Client' : 'Save Client' }}
+                    </button>
                 </div>
             </div>
         </div>
-        <div class="fixed inset-0 z-40 bg-black opacity-25"></div>
     @endif
 
-    <!-- Delete Confirmation Modal -->
+    {{-- ════ Delete Confirmation Modal ════ --}}
     @if ($deleteModal)
-        <div
-            class="fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto outline-none focus:outline-none">
-            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
-            <div class="relative w-auto max-w-sm mx-auto my-6">
-                <div
-                    class="flex flex-col w-full bg-white border-0 rounded-lg shadow-lg outline-none focus:outline-none">
-                    <div
-                        class="flex items-start justify-between p-5 border-b border-solid rounded-t border-blueGray-200">
-                        <h3 class="text-xl font-semibold">
-                            Confirm Deletion
-                        </h3>
-                        <button wire:click="$set('deleteModal', false)"
-                            class="float-right p-1 ml-auto text-2xl font-semibold leading-none text-black bg-transparent border-0 outline-none focus:outline-none">
-                            <span class="block w-6 h-6 text-2xl">×</span>
-                        </button>
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             style="background:rgba(11,37,69,0.55); backdrop-filter:blur(6px);">
+            <div class="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden">
+                {{-- Header --}}
+                <div class="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-red-50">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-sm"></i>
                     </div>
-                    <div class="relative flex-auto p-6">
-                        <p class="my-4 text-lg leading-relaxed text-blueGray-500">
-                            Are you sure you want to delete this tenant? This action cannot be undone.
-                        </p>
+                    <div>
+                        <h3 class="text-sm font-extrabold text-slate-800">Confirm Deletion</h3>
+                        <p class="text-[10px] text-slate-400 font-semibold">This action cannot be undone</p>
                     </div>
-                    <div class="flex items-center justify-end p-6 border-t border-solid rounded-b border-blueGray-200">
-                        <button wire:click="$set('deleteModal', false)" type="button"
-                            class="px-6 py-2 mb-1 mr-1 text-sm font-bold text-gray-500 uppercase transition-all duration-150 ease-linear outline-none background-transparent focus:outline-none">
-                            Cancel
-                        </button>
-                        <button wire:click="delete()" type="button"
-                            class="px-6 py-2 mb-1 mr-1 text-sm font-bold text-white uppercase transition-all duration-150 ease-linear bg-red-500 rounded shadow outline-none active:bg-red-600 hover:shadow-lg focus:outline-none">
-                            Delete
-                        </button>
-                    </div>
+                </div>
+                {{-- Body --}}
+                <div class="px-6 py-5">
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Are you sure you want to permanently delete this client? All associated data will be lost.
+                    </p>
+                </div>
+                {{-- Footer --}}
+                <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+                    <button wire:click="$set('deleteModal', false)" type="button"
+                        class="px-4 py-2 text-xs font-bold border border-slate-200 rounded-xl text-slate-500 bg-white hover:bg-slate-100 transition">
+                        Cancel
+                    </button>
+                    <button wire:click="delete()" type="button"
+                        class="px-4 py-2 text-xs font-bold text-white bg-red-500 rounded-xl hover:bg-red-600 transition shadow-md">
+                        <i class="fas fa-trash mr-1"></i> Delete
+                    </button>
                 </div>
             </div>
         </div>
-        <div class="fixed inset-0 z-40 bg-black opacity-25"></div>
     @endif

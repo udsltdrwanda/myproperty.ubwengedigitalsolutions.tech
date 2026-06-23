@@ -1,208 +1,200 @@
-<div>
-    <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-md">
-        <div class="flex justify-end mb-6">
-            <button wire:click="exportToCsv"
-                class="flex items-center px-4 py-2 text-white transition-colors bg-green-600 rounded-md hover:bg-green-700">
-                <i class="mr-2 fas fa-file-csv"></i> Export CSV
-                <span wire:loading wire:target="exportToCsv" class="ml-2">
-                    <i class="fas fa-spinner fa-spin"></i>
+<div class="space-y-5 pb-8">
+
+    {{-- ══ Toolbar ══ --}}
+    <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 bg-white rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+        {{-- Tax-rate info pills --}}
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rwanda Tax Brackets:</span>
+            @foreach([['0%','≤ 180K','#059669','rgba(5,150,105,0.08)'],['20%','180K–1M','#f39200','rgba(243,146,0,0.08)'],['30%','> 1M','#dc2626','rgba(220,38,38,0.08)']] as [$rate,$range,$fg,$bg])
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-xl border"
+                      style="color:{{ $fg }}; background:{{ $bg }}; border-color:{{ $fg }}40;">
+                    {{ $rate }} <span class="font-semibold opacity-70">{{ $range }}</span>
                 </span>
-            </button>
+            @endforeach
+            <span class="text-[10px] font-semibold text-slate-400 italic">· 50% of rental income is taxable · Tax is per district</span>
         </div>
+        {{-- Export --}}
+        <button wire:click="exportToCsv"
+            class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-xl transition duration-150 shadow-md"
+            style="background:linear-gradient(135deg,#059669,#047857);">
+            <i class="fas fa-file-csv text-[10px]"></i>
+            Export CSV
+            <span wire:loading wire:target="exportToCsv"><i class="fas fa-spinner fa-spin ml-1 text-[10px]"></i></span>
+        </button>
+    </div>
 
-        <!-- Tax Rate Info Box -->
-        <div class="p-4 mb-6 border border-blue-200 rounded-lg bg-blue-50">
-            <h3 class="flex items-center mb-2 font-medium text-blue-800">
-                <i class="mr-2 fas fa-info-circle"></i> Rwanda Rental Income Tax Rates (Progressive)
-            </h3>
-            <ul class="ml-6 text-sm text-blue-700 list-disc">
-                <li>0% on the first FRW 180,000 of annual taxable income</li>
-                <li>20% on the portion between FRW 180,001 and FRW 1,000,000</li>
-                <li>30% on the portion above FRW 1,000,000</li>
-            </ul>
-            <p class="mt-2 text-sm italic text-blue-600">Note: Only 50% of rental income is taxable. Tax is calculated progressively at the district level.</p>
-        </div>
-
-        <div class="overflow-x-auto">
-            <div class="inline-block w-full align-middle">
-                <!-- Summary Cards -->
-                <div class="grid grid-cols-4 gap-4 mb-6">
-                    <!-- Total Rental Income Card -->
-                    <div class="p-4 border border-indigo-200 rounded-lg bg-indigo-50">
-                        <div class="flex items-center">
-                            <div class="p-3 mr-4 text-white bg-indigo-500 rounded-full">
-                                <i class="fas fa-dollar-sign"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-indigo-800">Total Rental Income (100%)</p>
-                                <p class="text-2xl font-bold text-indigo-900">{{ number_format($grandTotalIncome, 2) }} FRW</p>
-                            </div>
-                        </div>
+    {{-- ══ KPI Cards ══ --}}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        @php
+            $kpis = [
+                ['label'=>'Total Rental Income','value'=>'RWF '.number_format($grandTotalIncome,0),'sub'=>'100% of invoiced','icon'=>'fa-file-invoice-dollar','color'=>'#003b70','light'=>'rgba(0,59,112,0.08)'],
+                ['label'=>'Taxable Income (50%)','value'=>'RWF '.number_format($grandTotalIncome/2,0),'sub'=>'applied tax base','icon'=>'fa-money-bill-wave','color'=>'#f39200','light'=>'rgba(243,146,0,0.08)'],
+                ['label'=>'Total Annual Tax','value'=>'RWF '.number_format($grandTotalTax,0),'sub'=>'progressive rate','icon'=>'fa-hand-holding-usd','color'=>'#dc2626','light'=>'rgba(220,38,38,0.08)'],
+                ['label'=>'Reporting Period','value'=>'Jan 1 – Dec 31','sub'=>now()->format('Y'),'icon'=>'fa-calendar-alt','color'=>'#7c3aed','light'=>'rgba(124,58,237,0.08)'],
+            ];
+        @endphp
+        @foreach($kpis as $k)
+            <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">{{ $k['label'] }}</p>
+                        <p class="text-lg font-extrabold mt-1 leading-tight" style="color:{{ $k['color'] }}">{{ $k['value'] }}</p>
+                        <p class="text-[10px] font-semibold text-slate-400 mt-0.5">{{ $k['sub'] }}</p>
                     </div>
-
-                    <!-- Taxable Income Card -->
-                    <div class="p-4 border border-blue-200 rounded-lg bg-blue-50">
-                        <div class="flex items-center">
-                            <div class="p-3 mr-4 text-white bg-blue-500 rounded-full">
-                                <i class="fas fa-money-bill-wave"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-blue-800">Total Taxable Income (50%)</p>
-                                <p class="text-2xl font-bold text-blue-900">{{ number_format($grandTotalIncome / 2, 2) }} FRW</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Total Tax Card -->
-                    <div class="p-4 border border-green-200 rounded-lg bg-green-50">
-                        <div class="flex items-center">
-                            <div class="p-3 mr-4 text-white bg-green-500 rounded-full">
-                                <i class="fas fa-hand-holding-usd"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-green-800">Total Annual Tax</p>
-                                <p class="text-2xl font-bold text-green-900">{{ number_format($grandTotalTax, 2) }} FRW</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Reporting Period Card -->
-                    <div class="p-4 border border-purple-200 rounded-lg bg-purple-50">
-                        <div class="flex items-center">
-                            <div class="p-3 mr-4 text-white bg-purple-500 rounded-full">
-                                <i class="fas fa-calendar-alt"></i>
-                            </div>
-                            <div>
-                                <p class="text-sm font-medium text-purple-800">Reporting Period</p>
-                                <p class="text-lg font-bold text-purple-900">Jan 1 - Dec 31, {{ now()->format('Y') }}</p>
-                            </div>
-                        </div>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                         style="background:{{ $k['light'] }}">
+                        <i class="fas {{ $k['icon'] }} text-sm" style="color:{{ $k['color'] }}"></i>
                     </div>
                 </div>
+            </div>
+        @endforeach
+    </div>
 
-                <!-- Districts Report -->
-                @forelse($districtsWithInvoices as $district)
-                <div class="mb-6 overflow-hidden border-b border-gray-200 shadow sm:rounded-lg">
-                    <div class="px-4 py-3 border-b border-blue-200 bg-blue-50">
-                        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                            <h3 class="flex items-center text-lg font-medium text-blue-800">
-                                <i class="mr-2 fas fa-map-marker-alt"></i>
-                                {{ $district['district_name'] }}
-                            </h3>
-                            <div class="mt-2 text-right md:mt-0">
-                                <p class="text-sm font-medium text-indigo-800">Rental Income (100%): {{ number_format($district['total_amount'], 2) }} FRW</p>
-                                <p class="text-sm font-medium text-blue-800">Bank Interest: {{ number_format($district['bank_interest'], 2) }} FRW</p>
-                                <p class="text-sm font-medium text-blue-800">Taxable Income (50% - Bank Interest): {{ number_format($district['taxable_amount'], 2) }} FRW</p>
-                                <p class="text-sm font-medium text-green-800">Annual Tax: {{ number_format($district['total_tax'], 2) }} FRW</p>
-                            </div>
-                        </div>
+    {{-- ══ Districts ══ --}}
+    @forelse($districtsWithInvoices as $district)
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] overflow-hidden">
+
+            {{-- District header --}}
+            <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3"
+                 style="background:linear-gradient(135deg,#003b70 0%,#0b2545 100%);">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                         style="background:rgba(243,146,0,0.2); border:1px solid rgba(243,146,0,0.3);">
+                        <i class="fas fa-map-marker-alt text-sm" style="color:#f39200;"></i>
                     </div>
-
-                    <!-- Progressive Tax Breakdown for this district -->
-                    <div class="p-3 border-b border-gray-200 bg-gray-50">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <div class="text-xs font-medium text-gray-700">
-                                Tax Breakdown (Based on 50% Taxable Income):
-                            </div>
-                            <div class="flex flex-wrap gap-3">
-                                <div class="px-2 py-1 bg-blue-100 rounded-md">
-                                    <span class="text-xs font-semibold text-blue-800">0%:</span>
-                                    <span class="text-xs text-blue-700">{{ number_format($district['tax_breakdown']['first_bracket']['amount'], 2) }} FRW</span>
-                                </div>
-                                <div class="px-2 py-1 bg-blue-200 rounded-md">
-                                    <span class="text-xs font-semibold text-blue-800">20%:</span>
-                                    <span class="text-xs text-blue-700">{{ number_format($district['tax_breakdown']['middle_bracket']['amount'], 2) }} FRW ({{ number_format($district['tax_breakdown']['middle_bracket']['tax'], 2) }} FRW tax)</span>
-                                </div>
-                                <div class="px-2 py-1 bg-blue-300 rounded-md">
-                                    <span class="text-xs font-semibold text-blue-800">30%:</span>
-                                    <span class="text-xs text-blue-700">{{ number_format($district['tax_breakdown']['upper_bracket']['amount'], 2) }} FRW ({{ number_format($district['tax_breakdown']['upper_bracket']['tax'], 2) }} FRW tax)</span>
-                                </div>
-                            </div>
-                        </div>
+                    <div>
+                        <p class="text-sm font-extrabold text-white">{{ $district['district_name'] }}</p>
+                        <p class="text-[10px] font-semibold" style="color:rgba(255,255,255,0.5);">District tax report</p>
                     </div>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    @foreach([
+                        ['Rental Income (100%)', number_format($district['total_amount'],0).' RWF', '#60a5fa'],
+                        ['Bank Interest',         number_format($district['bank_interest'],0).' RWF', '#34d399'],
+                        ['Taxable (50% − Int.)',  number_format($district['taxable_amount'],0).' RWF', '#f39200'],
+                        ['Annual Tax',            number_format($district['total_tax'],0).' RWF',      '#f87171'],
+                    ] as [$lbl,$val,$col])
+                        <div class="text-right">
+                            <p class="text-[10px] font-semibold" style="color:rgba(255,255,255,0.45);">{{ $lbl }}</p>
+                            <p class="text-xs font-extrabold" style="color:{{ $col }};">{{ $val }}</p>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
 
-                    <table class="w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                    Property
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                    UPI
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                    House
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                    Units
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                    Rental Income (100%)
-                                </th>
-                                <th scope="col" class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">
-                                    Taxable Income (50%)
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach($district['houses'] as $houseData)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
-                                    {{ $houseData['property_name'] }}
+            {{-- Tax bracket breakdown --}}
+            <div class="px-5 py-3 border-b border-slate-100 flex flex-wrap items-center gap-3" style="background:#f8fafc;">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bracket Breakdown:</span>
+                @foreach([
+                    ['0%',  $district['tax_breakdown']['first_bracket'],  '#059669', 'rgba(5,150,105,0.08)'],
+                    ['20%', $district['tax_breakdown']['middle_bracket'],  '#f39200', 'rgba(243,146,0,0.08)'],
+                    ['30%', $district['tax_breakdown']['upper_bracket'],   '#dc2626', 'rgba(220,38,38,0.08)'],
+                ] as [$rate, $b, $col, $bg])
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-bold"
+                         style="color:{{ $col }}; background:{{ $bg }}; border-color:{{ $col }}30;">
+                        <span class="font-extrabold">{{ $rate }}</span>
+                        <span class="font-semibold opacity-80">{{ number_format($b['amount'],0) }} RWF</span>
+                        @if($b['tax'] > 0)
+                            <span class="opacity-60">→ {{ number_format($b['tax'],0) }} tax</span>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- Houses table (desktop) --}}
+            <div class="hidden md:block overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr style="background:#f8fafc; border-bottom:1px solid #f1f5f9;">
+                            @foreach(['Property','UPI','House','Units','Rental Income (100%)','Taxable (50%)'] as $th)
+                                <th class="py-3 px-5 text-[10px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">{{ $th }}</th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($district['houses'] as $h)
+                            <tr class="border-b border-slate-50 transition duration-150"
+                                onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+                                <td class="py-4 px-5 whitespace-nowrap">
+                                    <p class="text-xs font-extrabold text-uds-navy">{{ $h['property_name'] }}</p>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                    {{ $houseData['property_upi'] }}
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-900 whitespace-nowrap">
-                                    <div class="flex items-center">
-                                        <i class="mr-2 text-gray-500 fas fa-home"></i>
-                                        {{ $houseData['house']['name'] }}
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
-                                    <span class="inline-flex px-2 text-xs font-semibold leading-5 text-gray-800 bg-gray-100 rounded-full">
-                                        {{ $houseData['units_count'] }}
+                                <td class="py-4 px-5 whitespace-nowrap">
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600 rounded-lg">
+                                        <i class="fas fa-map-pin text-[9px]"></i> {{ $h['property_upi'] ?: '—' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-sm font-medium text-indigo-900 whitespace-nowrap">
-                                    {{ number_format($houseData['invoice_amount'], 2) }} FRW
+                                <td class="py-4 px-5 whitespace-nowrap">
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fas fa-home text-[10px]" style="color:#003b70;"></i>
+                                        <span class="text-xs font-semibold text-slate-700">{{ $h['house']['name'] }}</span>
+                                    </div>
                                 </td>
-                                <td class="px-6 py-4 text-sm font-medium text-blue-900 whitespace-nowrap">
-                                    {{ number_format($houseData['invoice_amount'] / 2, 2) }} FRW
+                                <td class="py-4 px-5 whitespace-nowrap">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold rounded-xl"
+                                          style="background:rgba(0,59,112,0.08); color:#003b70;">
+                                        {{ $h['units_count'] }}
+                                    </span>
+                                </td>
+                                <td class="py-4 px-5 whitespace-nowrap">
+                                    <span class="text-xs font-extrabold text-slate-800">{{ number_format($h['invoice_amount'],0) }}</span>
+                                    <span class="text-[10px] text-slate-400 ml-0.5">RWF</span>
+                                </td>
+                                <td class="py-4 px-5 whitespace-nowrap">
+                                    <span class="text-xs font-bold" style="color:#f39200;">{{ number_format($h['invoice_amount']/2,0) }}</span>
+                                    <span class="text-[10px] text-slate-400 ml-0.5">RWF</span>
                                 </td>
                             </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot class="bg-gray-50">
-                            <tr>
-                                <td colspan="4" class="px-6 py-3 text-sm font-medium text-right text-gray-900">
-                                    District Totals:
-                                </td>
-                                <td class="px-6 py-3 text-sm font-medium text-indigo-900">
-                                    {{ number_format($district['total_amount'], 2) }} FRW
-                                </td>
-                                <td class="px-6 py-3 text-sm font-medium text-blue-900">
-                                    {{ number_format($district['taxable_amount'], 2) }} FRW
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                @empty
-                <div class="p-4 mb-6 border-l-4 border-yellow-400 bg-yellow-50">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <i class="text-yellow-400 fas fa-exclamation-triangle"></i>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:#f8fafc; border-top:2px solid #f1f5f9;">
+                            <td colspan="4" class="py-3 px-5 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider text-right">District Totals</td>
+                            <td class="py-3 px-5 whitespace-nowrap">
+                                <span class="text-xs font-extrabold" style="color:#003b70;">{{ number_format($district['total_amount'],0) }} RWF</span>
+                            </td>
+                            <td class="py-3 px-5 whitespace-nowrap">
+                                <span class="text-xs font-extrabold" style="color:#f39200;">{{ number_format($district['taxable_amount'],0) }} RWF</span>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            {{-- Houses mobile cards --}}
+            <div class="block md:hidden divide-y divide-slate-50">
+                @foreach($district['houses'] as $h)
+                    <div class="p-4 space-y-2">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style="background:rgba(0,59,112,0.08);">
+                                <i class="fas fa-home text-xs" style="color:#003b70;"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-extrabold text-uds-navy">{{ $h['house']['name'] }}</p>
+                                <p class="text-[10px] text-slate-400 font-semibold">{{ $h['property_name'] }} · {{ $h['units_count'] }} units</p>
+                            </div>
                         </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-yellow-700">
-                                No rental income data found for the current year.
-                            </p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="p-2.5 rounded-xl" style="background:#f8fafc;">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">Income (100%)</p>
+                                <p class="text-xs font-extrabold text-slate-800">{{ number_format($h['invoice_amount'],0) }} RWF</p>
+                            </div>
+                            <div class="p-2.5 rounded-xl" style="background:rgba(243,146,0,0.05);">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">Taxable (50%)</p>
+                                <p class="text-xs font-extrabold" style="color:#f39200;">{{ number_format($h['invoice_amount']/2,0) }} RWF</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-                @endforelse
+                @endforeach
             </div>
         </div>
-    </div>
+    @empty
+        <div class="bg-white rounded-2xl border border-slate-100 p-14 text-center shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style="background:rgba(243,146,0,0.08);">
+                <i class="fas fa-exclamation-triangle text-2xl" style="color:#f39200;"></i>
+            </div>
+            <p class="text-sm font-extrabold text-slate-500">No rental income data found for {{ now()->format('Y') }}</p>
+            <p class="text-xs text-slate-400 mt-1">Ensure invoices are recorded for the current reporting period.</p>
+        </div>
+    @endforelse
+
 </div>

@@ -9,7 +9,7 @@
                     </svg>
                 </button>
                 <a href="{{ route('dashboard') }}" class="flex ms-2 md:me-24">
-                    <img src="{{ asset('assets/img/logo/logo.png') }}" class="h-10 me-3" alt="FlowBite Logo" />
+                    <img src="{{ asset('assets/img/logo/white-logo.png') }}" class="h-10 me-3 w-auto object-contain" alt="My Business Growth Logo" />
                 </a>
             </div>
             <div class="relative ms-3">

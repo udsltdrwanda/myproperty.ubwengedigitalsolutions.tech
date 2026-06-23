@@ -1,14 +1,23 @@
 <x-app-layout>
-    <div class="p-4 bg-gray-100 border-b rounded-md page-breadcrumb">
-        <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-700">
-                Rental Income Tax
-            </h3>
+    <!-- Branded Header (same pattern as /landlord/property) -->
+    <div class="mb-6 p-4 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.01)]">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                     style="background:linear-gradient(135deg,#003b70,#0b2545);">
+                    <i class="fas fa-percent text-white text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-sm font-extrabold text-uds-navy uppercase tracking-wide">Rental Income Tax</h1>
+                    <p class="text-[10px] text-slate-400 font-semibold">Annual progressive tax report by district · {{ now()->format('Y') }}</p>
+                </div>
+            </div>
+            <div class="text-right hidden sm:block">
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Report</p>
+                <p class="text-xs font-semibold text-slate-600">Tax Analysis</p>
+            </div>
         </div>
     </div>
-    <div class="container px-4 py-6 my-6 bg-white rounded-md shadow-md x-auto p">
-        <div class="content">
-            @livewire('user.land-lord.rental-income-tax.rental-income-tax-livewire')
-        </div>
-    </div>
+
+    @livewire('user.land-lord.rental-income-tax.rental-income-tax-livewire')
 </x-app-layout>

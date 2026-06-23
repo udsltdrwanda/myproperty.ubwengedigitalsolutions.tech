@@ -76,6 +76,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::get('/landlord/Tenant/Contract/Index', [ImportTenantContractController::class, 'index'])->name('import.Contract.index');
             Route::post('/landlord/Tenant/Contract', [ImportTenantContractController::class, 'import'])->name('import.Contract.store');
             Route::get('/landlord/Tenant/TaxtCalculator', TaxCalculatorLivewire::class)->name('tax-calculator');
+            Route::get('/CrmAnalytics', [\App\Http\Controllers\User\landlord\CrmAnalyticsController::class, '__invoke'])->name('crm-analytics');
 
         });
 

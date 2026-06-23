@@ -1,188 +1,313 @@
-<div class="p-8 bg-white shadow-lg rounded-xl">
-    <div class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-6">
-            <h2 class="text-2xl font-bold text-gray-800">Building Management</h2>
-            <a href="{{ route('landlord.import.house.index') }}"
-                class="flex items-center px-4 py-2 text-sm font-medium text-gray-700 transition-all duration-200 bg-gray-100 rounded-lg hover:bg-gray-200">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                </svg>
-                Import
-            </a>
+<div class="space-y-6">
+    <!-- Top Action Card -->
+    <div class="p-6 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.01)] flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h3 class="text-base font-bold text-uds-navy">Building Inventory</h3>
+            <p class="text-xs text-slate-400 font-semibold">Manage registered buildings, structural levels, and amenities.</p>
         </div>
-        <div class="flex items-center gap-4">
-            <x-button2 action="createHouse" size="sm" color="green" class="flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                </svg>
-                Add House
-            </x-button2>
-
-            <a href="{{ route('landlord.unit.amenities') }}"
-                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white transition-colors duration-200 bg-blue-600 rounded-lg hover:bg-blue-700">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-                </svg>
-                Amenities
+        <div class="flex flex-wrap items-center gap-3">
+            <!-- Import Button -->
+            <a href="{{ route('landlord.import.house.index') }}"
+                class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-xl hover:bg-slate-200 transition duration-150">
+                <i class="fas fa-file-import text-slate-500"></i>
+                <span>Import Buildings</span>
             </a>
+            <!-- Amenities -->
+            <a href="{{ route('landlord.unit.amenities') }}"
+                class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition duration-150">
+                <i class="fas fa-sparkles text-emerald-600"></i>
+                <span>Amenities Directory</span>
+            </a>
+            <!-- Add House -->
+            <button wire:click="createHouse"
+                class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white bg-uds-orange hover:bg-uds-orange/90 rounded-xl transition duration-150 shadow-lg shadow-orange-600/15 hover:shadow-orange-600/25">
+                <i class="fas fa-plus"></i>
+                <span>Add Building</span>
+            </button>
         </div>
     </div>
 
-    <!-- House List Table -->
-    <div class="overflow-hidden border border-gray-200 rounded-lg">
-        <table class="w-full text-sm text-left text-gray-500">
-            <thead class="text-xs font-medium text-gray-700 uppercase bg-gray-50">
-                <tr>
-                    <th scope="col" class="px-6 py-4">Property UPI</th>
-                    <th scope="col" class="px-6 py-4">House Name</th>
-                    <th scope="col" class="px-6 py-4">Floor</th>
-                    <th scope="col" class="px-6 py-4">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                @forelse ($houses as $house)
-                    <tr class="transition-colors duration-200 bg-white hover:bg-gray-50">
-                        <td class="px-6 py-4 font-medium text-gray-900">{{ $house->property->upi ?? 'N/A' }}</td>
-                        <td class="px-6 py-4">{{ $house->name }}</td>
-                        <td class="px-6 py-4">{{ $house->floor }}</td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center space-x-3">
-                                <button wire:click="editHouse({{ $house->id }})"
-                                    class="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-600 transition-colors duration-200 rounded-md hover:bg-blue-50">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                    </svg>
-                                    Edit
-                                </button>
-                                @if ($house->units->isEmpty())
-                                    <button wire:click="confirmDelete({{ $house->id }})"
-                                        class="inline-flex items-center px-3 py-1 text-sm font-medium text-red-600 transition-colors duration-200 rounded-md hover:bg-red-50">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                        Delete
+    <!-- Table / Grid Container -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.01)] overflow-hidden">
+        
+        <!-- Desktop Table View -->
+        <div class="hidden md:block overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/75 border-b border-slate-100">
+                        <th class="py-4 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Building Name</th>
+                        <th class="py-4 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Associated Property (UPI)</th>
+                        <th class="py-4 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Floors</th>
+                        <th class="py-4 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Units Count</th>
+                        <th class="py-4 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse ($houses as $house)
+                        <tr class="hover:bg-slate-50/40 transition duration-150">
+                            <!-- Building Name -->
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-orange-50 text-uds-orange flex items-center justify-center font-bold text-sm">
+                                        <i class="fas fa-home"></i>
+                                    </div>
+                                    <div>
+                                        <span class="block text-xs font-bold text-uds-navy">{{ $house->name }}</span>
+                                        @if($house->description)
+                                            <span class="block text-[10px] text-slate-400 font-semibold truncate max-w-xs">{{ $house->description }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </td>
+                            <!-- Associated Property -->
+                            <td class="py-4 px-6">
+                                <span class="block font-mono text-xs font-extrabold text-uds-navy tracking-tight">
+                                    {{ $house->property->upi ?? 'N/A' }}
+                                </span>
+                                <span class="block text-[10px] text-slate-400 font-semibold">{{ $house->property->name ?? 'Unnamed Land' }}</span>
+                            </td>
+                            <!-- Floors -->
+                            <td class="py-4 px-6 text-center">
+                                <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold">
+                                    {{ $house->floor }} Level(s)
+                                </span>
+                            </td>
+                            <!-- Units Count -->
+                            <td class="py-4 px-6 text-center">
+                                <span class="px-2.5 py-1 bg-blue-50 text-[#003b70] rounded-lg text-[10px] font-bold">
+                                    {{ $house->units->count() }} Unit(s)
+                                </span>
+                            </td>
+                            <!-- Actions -->
+                            <td class="py-4 px-6">
+                                <div class="flex items-center justify-center gap-2">
+                                    <button wire:click="editHouse({{ $house->id }})"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition duration-150">
+                                        <i class="fas fa-edit text-[10px]"></i>
+                                        <span>Edit</span>
                                     </button>
-                                @endif
+                                    @if ($house->units->isEmpty())
+                                        <button wire:click="confirmDelete({{ $house->id }})"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold transition duration-150">
+                                            <i class="fas fa-trash text-[10px]"></i>
+                                            <span>Delete</span>
+                                        </button>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="py-8 px-6 text-center">
+                                <div class="flex flex-col items-center justify-center py-4">
+                                    <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 mb-3">
+                                        <i class="fas fa-home text-lg"></i>
+                                    </div>
+                                    <p class="text-xs font-bold text-slate-600">No Buildings Registered</p>
+                                    <p class="text-[10px] text-slate-400 font-semibold mt-0.5">Click "Add Building" to list your first building.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile Card View -->
+        <div class="block md:hidden divide-y divide-slate-100">
+            @forelse ($houses as $house)
+                <div class="p-5 space-y-4">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-orange-50 text-uds-orange flex items-center justify-center font-bold text-sm">
+                                <i class="fas fa-home"></i>
                             </div>
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="4" class="px-6 py-8 text-center text-gray-500">
-                            <div class="flex flex-col items-center justify-center">
-                                <svg class="w-12 h-12 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                                </svg>
-                                <p class="text-lg font-medium">No houses found</p>
-                                <p class="text-sm text-gray-500">Add your first house to get started</p>
+                            <div>
+                                <span class="block text-xs font-bold text-uds-navy">{{ $house->name }}</span>
+                                <span class="block text-[10px] text-slate-400 font-semibold">UPI: {{ $house->property->upi ?? 'N/A' }}</span>
                             </div>
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                        </div>
+                        <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold">
+                            {{ $house->floor }} Level(s)
+                        </span>
+                    </div>
+
+                    <!-- Details Grid -->
+                    <div class="grid grid-cols-2 gap-4 py-3 px-4 bg-slate-50/50 rounded-xl border border-slate-100 text-xs">
+                        <div>
+                            <span class="block text-[10px] text-slate-400 font-bold uppercase">Land Property</span>
+                            <span class="font-bold text-slate-700 truncate block">{{ $house->property->name ?? 'Unnamed Land' }}</span>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] text-slate-400 font-bold uppercase">Total Units</span>
+                            <span class="font-bold text-slate-700">{{ $house->units->count() }} Unit(s)</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                        <button wire:click="editHouse({{ $house->id }})"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition duration-150">
+                            <i class="fas fa-edit text-[10px]"></i>
+                            <span>Edit</span>
+                        </button>
+                        @if ($house->units->isEmpty())
+                            <button wire:click="confirmDelete({{ $house->id }})"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold transition duration-150">
+                                <i class="fas fa-trash text-[10px]"></i>
+                                <span>Delete</span>
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="p-8 text-center">
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 mb-3">
+                            <i class="fas fa-home text-lg"></i>
+                        </div>
+                        <p class="text-xs font-bold text-slate-600">No Buildings Registered</p>
+                        <p class="text-[10px] text-slate-400 font-semibold mt-0.5">Click "Add Building" to list your first building.</p>
+                    </div>
+                </div>
+            @endforelse
+        </div>
+
     </div>
 
     <!-- Enhanced Pagination -->
-    <div class="mt-6">
+    <div class="mt-4">
         {{ $houses->links('pagination::tailwind') }}
     </div>
 
-    {{-- Livewire Modal --}}
+    <!-- Add/Edit House Modal -->
     @if ($showModal)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto bg-black/50">
-            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
-            <div class="relative w-full max-w-md p-8 mx-auto bg-white shadow-2xl rounded-xl">
-                <button type="button" wire:click="closeModal"
-                    class="absolute text-gray-400 top-4 right-4 hover:text-gray-900">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-                <h3 class="mb-6 text-2xl font-semibold text-gray-900">
-                    {{ $house_id ? 'Edit House' : 'Add House' }}
-                </h3>
-
-                <form class="space-y-6">
-                    <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-700">Property (UPI)</label>
-                        <select wire:model="selected_property_id"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">Select Property(UPI)</option>
-                            @foreach ($properties as $property)
-                                <option value="{{ $property->id }}">{{ $property->upi }} - {{ $property->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('selected_property_id')
-                            <span class="mt-1 text-sm text-red-500">{{ $message }}</span>
-                        @enderror
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <!-- Backdrop Blur Overlay -->
+            <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" wire:click="closeModal"></div>
+            
+            <!-- Modal Card -->
+            <div class="relative bg-white rounded-2xl shadow-xl overflow-hidden max-w-md w-full border border-slate-100 transition-all transform animate-in fade-in zoom-in-95 duration-150"
+                role="dialog" aria-modal="true">
+                
+                <form wire:submit.prevent="storeHouse">
+                    <!-- Header -->
+                    <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                        <h3 class="text-base font-bold text-uds-navy">
+                            {{ $house_id ? 'Edit Building' : 'Add New Building' }}
+                        </h3>
+                        <button type="button" wire:click="closeModal" class="text-slate-400 hover:text-slate-600 transition">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
                     </div>
+                    
+                    <!-- Body -->
+                    <div class="p-6 space-y-4">
+                        <!-- Select Property -->
+                        <div>
+                            <label class="block mb-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider" for="selected_property_id">
+                                Property (UPI) <span class="text-red-500">*</span>
+                            </label>
+                            <select wire:model="selected_property_id"
+                                class="w-full px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl focus:border-uds-orange focus:ring focus:ring-uds-orange/20 transition duration-150"
+                                id="selected_property_id">
+                                <option value="">Select Associated Land Property</option>
+                                @foreach ($properties as $property)
+                                    <option value="{{ $property->id }}">{{ $property->upi }} - {{ $property->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('selected_property_id')
+                                <span class="block mt-1 text-[10px] font-bold text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
 
-                    <div>
-                        <label for="name" class="block mb-2 text-sm font-medium text-gray-700">House Name</label>
-                        <input type="text" id="name" wire:model="name"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        @error('name')
-                            <span class="mt-1 text-sm text-red-500">{{ $message }}</span>
-                        @enderror
+                        <!-- Building Name -->
+                        <div>
+                            <label class="block mb-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider" for="name">
+                                Building Name <span class="text-red-500">*</span>
+                            </label>
+                            <input wire:model="name" type="text"
+                                class="w-full px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl focus:border-uds-orange focus:ring focus:ring-uds-orange/20 transition duration-150"
+                                id="name" placeholder="e.g. Block A, Plaza, Annex">
+                            @error('name')
+                                <span class="block mt-1 text-[10px] font-bold text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <!-- Floors -->
+                        <div>
+                            <label class="block mb-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider" for="floor">
+                                Number of Floors (Levels) <span class="text-red-500">*</span>
+                            </label>
+                            <input wire:model="floor" type="number"
+                                class="w-full px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl focus:border-uds-orange focus:ring focus:ring-uds-orange/20 transition duration-150"
+                                id="floor" placeholder="e.g. 3">
+                            @error('floor')
+                                <span class="block mt-1 text-[10px] font-bold text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block mb-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider" for="description">
+                                Description / Notes
+                            </label>
+                            <textarea wire:model="description"
+                                class="w-full px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl focus:border-uds-orange focus:ring focus:ring-uds-orange/20 transition duration-150"
+                                id="description" rows="3" placeholder="Enter annotations about structure or location..."></textarea>
+                            @error('description')
+                                <span class="block mt-1 text-[10px] font-bold text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
-
-                    <div>
-                        <label for="floor" class="block mb-2 text-sm font-medium text-gray-700">Floor Number</label>
-                        <input type="number" id="floor" wire:model="floor"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        @error('floor')
-                            <span class="mt-1 text-sm text-red-500">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label for="description" class="block mb-2 text-sm font-medium text-gray-700">Description</label>
-                        <textarea id="description" wire:model="description" rows="3"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                        @error('description')
-                            <span class="mt-1 text-sm text-red-500">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div class="flex justify-end space-x-4">
-                        <x-button2 action="closeModal" color="gray" size="sm" class="px-6">
+                    
+                    <!-- Footer -->
+                    <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
+                        <button type="button" wire:click="closeModal" 
+                            class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition">
                             Cancel
-                        </x-button2>
-                        <x-button2 action="storeHouse" size="sm" color="green" class="px-6">
-                            {{ $house_id ? 'Update' : 'Create' }}
-                        </x-button2>
+                        </button>
+                        
+                        <button type="submit"
+                            class="px-5 py-2 text-xs font-bold text-white bg-uds-blue hover:bg-uds-blue/90 rounded-xl transition shadow-lg shadow-blue-900/15 hover:shadow-blue-900/25">
+                            Save Changes
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     @endif
 
+    <!-- Delete Confirmation Modal -->
     @if ($confirmingDelete)
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
-            <div class="relative w-full max-w-sm p-8 bg-white shadow-2xl rounded-xl">
-                <div class="flex items-center justify-center mb-6">
-                    <div class="p-3 bg-red-100 rounded-full">
-                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                    </div>
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <!-- Backdrop Blur Overlay -->
+            <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" wire:click="cancelDelete"></div>
+            
+            <!-- Modal Card -->
+            <div class="relative bg-white rounded-2xl shadow-xl overflow-hidden max-w-sm w-full border border-slate-100 p-6 text-center transition-all transform animate-in fade-in zoom-in-95 duration-150"
+                role="dialog" aria-modal="true">
+                
+                <!-- Danger Icon -->
+                <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4 text-xl">
+                    <i class="fas fa-exclamation-triangle"></i>
                 </div>
-                <h3 class="mb-2 text-xl font-semibold text-center text-gray-900">Confirm Deletion</h3>
-                <p class="mb-6 text-sm text-center text-gray-600">Are you sure you want to delete this house? This action cannot be undone.</p>
-                <div class="flex justify-center space-x-4">
-                    <button wire:click="cancelDelete"
-                        class="px-6 py-2 text-sm font-medium text-gray-700 transition-colors duration-200 bg-gray-100 rounded-lg hover:bg-gray-200">
+                
+                <!-- Title -->
+                <h3 class="mb-2 text-base font-bold text-uds-navy">Delete Building</h3>
+                <p class="mb-6 text-xs text-slate-400 font-semibold leading-relaxed">
+                    Are you sure you want to delete this building? This action cannot be undone and will delete all related records.
+                </p>
+                
+                <!-- Controls -->
+                <div class="flex items-center justify-center gap-3">
+                    <button type="button" wire:click="cancelDelete"
+                        class="w-full py-2.5 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-100 hover:bg-slate-200/80 rounded-xl transition duration-150">
                         Cancel
                     </button>
-                    <button wire:click="deleteHouseConfirmed"
-                        class="px-6 py-2 text-sm font-medium text-white transition-colors duration-200 bg-red-600 rounded-lg hover:bg-red-700">
-                        Delete
+                    <button type="button" wire:click="deleteHouseConfirmed"
+                        class="w-full py-2.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition duration-150 shadow-lg shadow-red-600/15">
+                        Confirm Delete
                     </button>
                 </div>
             </div>
