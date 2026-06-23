@@ -150,14 +150,17 @@
                         </button>
                     </div>
 
-                    <!-- Forgot Password Link -->
-                    @if (Route::has('password.request'))
-                        <div class="text-center pt-2">
+                    <!-- Forgot Password & Register Links -->
+                    <div class="flex flex-col gap-2 text-center pt-3">
+                        @if (Route::has('password.request'))
                             <a href="{{ route('password.request') }}" class="text-xs sm:text-sm text-slate-400 hover:text-slate-600 font-medium hover:underline">
                                 Forgot your password?
                             </a>
-                        </div>
-                    @endif
+                        @endif
+                        <a href="{{ route('register') }}" class="text-xs sm:text-sm text-uds-orange hover:text-uds-orange/80 font-bold hover:underline">
+                            Don't have an account? Register as Landlord
+                        </a>
+                    </div>
                 </form>
             </div>
         </div>
