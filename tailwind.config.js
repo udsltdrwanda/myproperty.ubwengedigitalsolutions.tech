@@ -14,7 +14,15 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Outfit', ...defaultTheme.fontFamily.sans],
+            },
+            colors: {
+                uds: {
+                    blue: '#003b70',
+                    orange: '#f39200',
+                    green: '#2d9d3f',
+                    navy: '#0b2545',
+                },
             },
         },
     },

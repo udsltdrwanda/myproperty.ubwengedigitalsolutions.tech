@@ -1,5 +1,20 @@
 <div class="space-y-5 pb-8">
 
+    <div class="flex flex-wrap items-end justify-between gap-3 px-5 py-4 bg-white rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+        <div>
+            <label for="property_tax_year_filter" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Filter by Year</label>
+            <select wire:model.live="year" id="property_tax_year_filter"
+                class="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl focus:border-uds-blue focus:ring-4 focus:ring-uds-blue/5 transition duration-150 min-w-[120px]">
+                @foreach ($availableYears as $availableYear)
+                    <option value="{{ $availableYear }}">{{ $availableYear }}</option>
+                @endforeach
+            </select>
+        </div>
+        <p class="text-[10px] font-semibold text-slate-400 pb-1">
+            Showing land and building tax for <span class="font-extrabold text-uds-navy">{{ $year }}</span>
+        </p>
+    </div>
+
     @if ($propertiesByDistrict->isEmpty())
         {{-- Empty State --}}
         <div class="bg-white rounded-2xl border border-slate-100 p-14 text-center shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
@@ -7,7 +22,7 @@
                 <i class="fas fa-building text-2xl" style="color:#cbd5e1;"></i>
             </div>
             <p class="text-sm font-extrabold text-slate-500">No properties found</p>
-            <p class="text-xs text-slate-400 mt-1">Add properties and adjacement values to see tax assessments.</p>
+            <p class="text-xs text-slate-400 mt-1">Add properties and adjacement values to see tax assessments for {{ $year }}.</p>
             <a href="{{ route('landlord.land.adjacement') }}"
                class="inline-flex items-center gap-1.5 mt-4 px-4 py-2 text-xs font-bold text-white rounded-xl shadow-md"
                style="background:linear-gradient(135deg,#003b70,#0b2545);">
@@ -108,7 +123,7 @@
                                     onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
                                     <td class="py-4 px-5 whitespace-nowrap">
                                         <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-xl"
-                                              style="background:rgba(0,59,112,0.08); color:#003b70;">{{ now()->year }}</span>
+                                              style="background:rgba(0,59,112,0.08); color:#003b70;">{{ $year }}</span>
                                     </td>
                                     <td class="py-4 px-5 whitespace-nowrap text-xs font-semibold text-slate-700">
                                         {{ number_format($property->area) }} m²

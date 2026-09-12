@@ -9,7 +9,7 @@
                 </div>
                 <div>
                     <h1 class="text-sm font-extrabold text-uds-navy uppercase tracking-wide">Rental Income Tax</h1>
-                    <p class="text-[10px] text-slate-400 font-semibold">Annual progressive tax report by district · {{ now()->format('Y') }}</p>
+                    <p class="text-[10px] text-slate-400 font-semibold">Annual progressive tax report by district</p>
                 </div>
             </div>
             <div class="text-right hidden sm:block">

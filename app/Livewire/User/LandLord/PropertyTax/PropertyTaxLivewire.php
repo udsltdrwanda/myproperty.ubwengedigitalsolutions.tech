@@ -14,10 +14,50 @@ use Carbon\Carbon;
 
 class PropertyTaxLivewire extends Component
 {
+    public $year;
+
+    public function mount()
+    {
+        $this->year = (int) Carbon::now()->year;
+    }
+
+    public function updatedYear($value): void
+    {
+        $this->year = (int) $value;
+    }
+
+    private function availableYears(): array
+    {
+        $userId = Auth::user()->landlord_id;
+        $current = (int) Carbon::now()->year;
+
+        $fromLand = LandAdjacement::query()
+            ->where('landlord_id', $userId)
+            ->whereNotNull('year')
+            ->distinct()
+            ->pluck('year');
+
+        $fromHouses = HouseAdjacement::query()
+            ->where('landlord_id', $userId)
+            ->whereNotNull('year')
+            ->distinct()
+            ->pluck('year');
+
+        return $fromLand
+            ->merge($fromHouses)
+            ->map(fn ($year) => (int) $year)
+            ->filter(fn ($year) => $year >= 2000 && $year <= $current + 1)
+            ->merge(range($current, $current - 5))
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->all();
+    }
+
     public function render()
     {
         $userId = Auth::user()->landlord_id;
-        $currentYear = Carbon::now()->year;
+        $currentYear = (int) $this->year;
 
         $propertiesByDistrict = Property::with('districtRelation')
             ->where('landlord_id', $userId)
@@ -67,7 +107,8 @@ class PropertyTaxLivewire extends Component
             });
 
         return view('livewire.user.land-lord.property-tax.property-tax-livewire', [
-            'propertiesByDistrict' => $propertiesByDistrict
+            'propertiesByDistrict' => $propertiesByDistrict,
+            'availableYears' => $this->availableYears(),
         ]);
     }
 }

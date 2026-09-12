@@ -1,19 +1,28 @@
 <div class="space-y-5 pb-8">
 
     {{-- ══ Toolbar ══ --}}
-    <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 bg-white rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
-        {{-- Tax-rate info pills --}}
-        <div class="flex flex-wrap items-center gap-2">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rwanda Tax Brackets:</span>
-            @foreach([['0%','≤ 180K','#059669','rgba(5,150,105,0.08)'],['20%','180K–1M','#f39200','rgba(243,146,0,0.08)'],['30%','> 1M','#dc2626','rgba(220,38,38,0.08)']] as [$rate,$range,$fg,$bg])
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-xl border"
-                      style="color:{{ $fg }}; background:{{ $bg }}; border-color:{{ $fg }}40;">
-                    {{ $rate }} <span class="font-semibold opacity-70">{{ $range }}</span>
-                </span>
-            @endforeach
-            <span class="text-[10px] font-semibold text-slate-400 italic">· 50% of rental income is taxable · Tax is per district</span>
+    <div class="flex flex-wrap items-end justify-between gap-3 px-5 py-4 bg-white rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+        <div class="flex flex-wrap items-end gap-4">
+            <div>
+                <label for="tax_year_filter" class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Filter by Year</label>
+                <select wire:model.live="year" id="tax_year_filter"
+                    class="px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl focus:border-uds-blue focus:ring-4 focus:ring-uds-blue/5 transition duration-150 min-w-[120px]">
+                    @foreach ($availableYears as $availableYear)
+                        <option value="{{ $availableYear }}">{{ $availableYear }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 pb-1">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Rwanda Tax Brackets:</span>
+                @foreach([['0%','≤ 180K','#059669','rgba(5,150,105,0.08)'],['20%','180K–1M','#f39200','rgba(243,146,0,0.08)'],['30%','> 1M','#dc2626','rgba(220,38,38,0.08)']] as [$rate,$range,$fg,$bg])
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-extrabold rounded-xl border"
+                          style="color:{{ $fg }}; background:{{ $bg }}; border-color:{{ $fg }}40;">
+                        {{ $rate }} <span class="font-semibold opacity-70">{{ $range }}</span>
+                    </span>
+                @endforeach
+                <span class="text-[10px] font-semibold text-slate-400 italic">· 50% of rental income is taxable · Tax is per district</span>
+            </div>
         </div>
-        {{-- Export --}}
         <button wire:click="exportToCsv"
             class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white rounded-xl transition duration-150 shadow-md"
             style="background:linear-gradient(135deg,#059669,#047857);">
@@ -30,7 +39,7 @@
                 ['label'=>'Total Rental Income','value'=>'RWF '.number_format($grandTotalIncome,0),'sub'=>'100% of invoiced','icon'=>'fa-file-invoice-dollar','color'=>'#003b70','light'=>'rgba(0,59,112,0.08)'],
                 ['label'=>'Taxable Income (50%)','value'=>'RWF '.number_format($grandTotalIncome/2,0),'sub'=>'applied tax base','icon'=>'fa-money-bill-wave','color'=>'#f39200','light'=>'rgba(243,146,0,0.08)'],
                 ['label'=>'Total Annual Tax','value'=>'RWF '.number_format($grandTotalTax,0),'sub'=>'progressive rate','icon'=>'fa-hand-holding-usd','color'=>'#dc2626','light'=>'rgba(220,38,38,0.08)'],
-                ['label'=>'Reporting Period','value'=>'Jan 1 – Dec 31','sub'=>now()->format('Y'),'icon'=>'fa-calendar-alt','color'=>'#7c3aed','light'=>'rgba(124,58,237,0.08)'],
+                ['label'=>'Reporting Period','value'=>'Jan 1 – Dec 31','sub'=>(string) $year,'icon'=>'fa-calendar-alt','color'=>'#7c3aed','light'=>'rgba(124,58,237,0.08)'],
             ];
         @endphp
         @foreach($kpis as $k)
@@ -192,8 +201,8 @@
             <div class="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style="background:rgba(243,146,0,0.08);">
                 <i class="fas fa-exclamation-triangle text-2xl" style="color:#f39200;"></i>
             </div>
-            <p class="text-sm font-extrabold text-slate-500">No rental income data found for {{ now()->format('Y') }}</p>
-            <p class="text-xs text-slate-400 mt-1">Ensure invoices are recorded for the current reporting period.</p>
+            <p class="text-sm font-extrabold text-slate-500">No rental income data found for {{ $year }}</p>
+            <p class="text-xs text-slate-400 mt-1">Try another year, or ensure invoices are recorded for this reporting period.</p>
         </div>
     @endforelse
 

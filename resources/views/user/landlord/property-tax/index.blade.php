@@ -9,7 +9,7 @@
                 </div>
                 <div>
                     <h1 class="text-sm font-extrabold text-uds-navy uppercase tracking-wide">Property Tax</h1>
-                    <p class="text-[10px] text-slate-400 font-semibold">Land & building tax assessment by district · {{ now()->format('Y') }}</p>
+                    <p class="text-[10px] text-slate-400 font-semibold">Land & building tax assessment by district</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">

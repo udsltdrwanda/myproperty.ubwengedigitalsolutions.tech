@@ -27,9 +27,10 @@
     <!-- Load Flowbite CSS -->
     <link href="https://cdn.jsdelivr.net/npm/flowbite@2.4.1/dist/flowbite.min.css" rel="stylesheet" />
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+    <!-- Google Fonts: Outfit (same as home page) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- App Styles -->
     <link rel="stylesheet" href="{{ asset('assets/build/assets/app-DspuE8pW.js') }}">
@@ -103,19 +104,42 @@
             outline: 2px solid blue;
         }
 
-        /* UDS Brand Color Utilities */
+        /* Match home page font */
+        html, body, .font-sans {
+            font-family: 'Outfit', sans-serif !important;
+        }
+
+        /* UDS Brand Color Utilities (same as home page) */
         .bg-uds-blue { background-color: #003b70 !important; }
         .text-uds-blue { color: #003b70 !important; }
         .bg-uds-orange { background-color: #f39200 !important; }
         .text-uds-orange { color: #f39200 !important; }
         .text-uds-navy { color: #0b2545 !important; }
         .bg-uds-navy { background-color: #0b2545 !important; }
+        .bg-uds-green { background-color: #2d9d3f !important; }
+        .text-uds-green { color: #2d9d3f !important; }
 
         .hover\:bg-uds-blue:hover { background-color: #003b70 !important; }
+        .hover\:bg-\[\#002f5a\]:hover { background-color: #002f5a !important; }
         .hover\:text-uds-blue:hover { color: #003b70 !important; }
         .hover\:bg-uds-orange:hover { background-color: #f39200 !important; }
         .hover\:text-uds-orange:hover { color: #f39200 !important; }
+        .hover\:text-uds-orange\/80:hover { color: rgba(243, 146, 0, 0.8) !important; }
         .hover\:text-white:hover { color: #ffffff !important; }
+        .focus\:border-uds-orange:focus { border-color: #f39200 !important; }
+
+        .focus-uds:focus {
+            border-color: #f39200 !important;
+            box-shadow: 0 0 0 3px rgba(243, 146, 0, 0.2) !important;
+            outline: none !important;
+        }
+
+        .btn-uds {
+            background-color: #003b70 !important;
+            color: #ffffff !important;
+            font-family: 'Outfit', sans-serif !important;
+        }
+        .btn-uds:hover { background-color: #002f5a !important; }
 
         /* Responsive Fallback Utilities */
         @media (min-width: 768px) {
@@ -143,10 +167,10 @@
     @livewireStyles
 </head>
 
-<body class="font-sans antialiased">
+<body class="font-sans antialiased text-slate-600">
     <x-banner />
 
-    <div class="min-h-screen bg-gray-100">
+    <div class="min-h-screen bg-slate-50">
         @livewire('navigation-menu')
         @include('layouts.auth.aside-menu')
 
@@ -156,8 +180,8 @@
                 <div class="border-gray-200 border-dashed rounded-lg dark:border-gray-700 mt-14">
                     <!-- Page Heading -->
                     @if (isset($header))
-                        <header class="bg-white shadow">
-                            <div class="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+                        <header class="mb-6 p-4 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.01)]">
+                            <div class="px-1">
                                 {{ $header }}
                             </div>
                         </header>

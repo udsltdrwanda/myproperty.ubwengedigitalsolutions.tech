@@ -16,15 +16,50 @@ class RentalIncomeTaxLivewire extends Component
     use WithPagination;
 
     public $isExporting = false;
+    public $year;
     public $startDate = null;
     public $endDate = null;
     public $Total = 0;
 
     public function mount()
     {
-        // Year-to-date range for the report
-        $this->startDate = now()->startOfYear()->format('Y-m-d');
-        $this->endDate = now()->endOfYear()->format('Y-m-d');
+        $this->year = (int) now()->year;
+        $this->applyYearRange();
+    }
+
+    public function updatedYear($value): void
+    {
+        $this->year = (int) $value;
+        $this->applyYearRange();
+        $this->resetPage();
+    }
+
+    private function applyYearRange(): void
+    {
+        $year = (int) $this->year;
+        $this->startDate = now()->setYear($year)->startOfYear()->format('Y-m-d');
+        $this->endDate = now()->setYear($year)->endOfYear()->format('Y-m-d');
+    }
+
+    private function availableYears(): array
+    {
+        $current = (int) now()->year;
+
+        $fromInvoices = Invoice::query()
+            ->where('landlord_id', Auth::user()->landlord_id)
+            ->whereNotNull('start_date')
+            ->selectRaw('YEAR(start_date) as y')
+            ->distinct()
+            ->pluck('y')
+            ->map(fn ($year) => (int) $year)
+            ->filter(fn ($year) => $year >= 2000 && $year <= $current + 1);
+
+        return $fromInvoices
+            ->merge(range($current, $current - 5))
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->all();
     }
 
     private function calculateDistrictTax($annualIncome)
@@ -148,7 +183,7 @@ class RentalIncomeTaxLivewire extends Component
     {
         $this->isExporting = true;
 
-        $fileName = 'annual_rental_income_summary_report_and_tax_by_district_' . now()->format('Y-m-d') . '.csv';
+        $fileName = 'annual_rental_income_summary_report_and_tax_by_district_' . $this->year . '_' . now()->format('Y-m-d') . '.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=$fileName",
@@ -159,7 +194,7 @@ class RentalIncomeTaxLivewire extends Component
 
             // Add title row
             fputcsv($file, ['ANNUALLY RENTAL INCOME SUMMARY REPORT AND TAX BY DISTRICT']);
-            fputcsv($file, ['Reporting Period: Jan 1 - Dec 31, ' . now()->format('Y')]);
+            fputcsv($file, ['Reporting Period: Jan 1 - Dec 31, ' . $this->year]);
             fputcsv($file, []); // Empty row for spacing
 
             // Add header row
@@ -225,6 +260,7 @@ class RentalIncomeTaxLivewire extends Component
             'districtsWithInvoices' => $districtsWithInvoices,
             'grandTotalIncome' => $grandTotalIncome,
             'grandTotalTax' => $grandTotalTax,
+            'availableYears' => $this->availableYears(),
         ]);
     }
 }

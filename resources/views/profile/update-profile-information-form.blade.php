@@ -11,7 +11,6 @@
         <!-- Profile Photo -->
         @if (Laravel\Jetstream\Jetstream::managesProfilePhotos())
             <div x-data="{ photoName: null, photoPreview: null }" class="col-span-6 sm:col-span-4">
-                <!-- Profile Photo File Input -->
                 <input type="file" id="photo" class="hidden" wire:model.live="photo" x-ref="photo"
                     x-on:change="
                                     photoName = $refs.photo.files[0].name;
@@ -22,29 +21,31 @@
                                     reader.readAsDataURL($refs.photo.files[0]);
                             " />
 
-                <x-label for="photo" value="{{ __('Photo') }}" />
+                <label for="photo" class="block text-xs sm:text-sm font-semibold text-slate-600 mb-1.5">{{ __('Photo') }}</label>
 
-                <!-- Current Profile Photo -->
                 <div class="mt-2" x-show="! photoPreview">
                     <img src="{{ $this->user->profile_photo_url }}" alt="{{ $this->user->name }}"
-                        class="object-cover rounded-full size-20">
+                        class="object-cover w-20 h-20 rounded-full ring-2 ring-slate-100">
                 </div>
 
-                <!-- New Profile Photo Preview -->
                 <div class="mt-2" x-show="photoPreview" style="display: none;">
-                    <span class="block bg-center bg-no-repeat bg-cover rounded-full size-20"
+                    <span class="block bg-center bg-no-repeat bg-cover w-20 h-20 rounded-full ring-2 ring-slate-100"
                         x-bind:style="'background-image: url(\'' + photoPreview + '\');'">
                     </span>
                 </div>
 
-                <x-secondary-button class="mt-2 me-2" type="button" x-on:click.prevent="$refs.photo.click()">
+                <button type="button"
+                    class="mt-2 me-2 inline-flex items-center justify-center bg-white border border-slate-300 text-slate-600 hover:text-uds-navy hover:border-slate-400 text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200"
+                    x-on:click.prevent="$refs.photo.click()">
                     {{ __('Select A New Photo') }}
-                </x-secondary-button>
+                </button>
 
                 @if ($this->user->profile_photo_path)
-                    <x-secondary-button type="button" class="mt-2" wire:click="deleteProfilePhoto">
+                    <button type="button"
+                        class="mt-2 inline-flex items-center justify-center bg-white border border-slate-300 text-slate-600 hover:text-uds-navy hover:border-slate-400 text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200"
+                        wire:click="deleteProfilePhoto">
                         {{ __('Remove Photo') }}
-                    </x-secondary-button>
+                    </button>
                 @endif
 
                 <x-input-error for="photo" class="mt-2" />
@@ -53,33 +54,33 @@
 
         <!-- Name -->
         <div class="col-span-6 sm:col-span-4">
-            <x-label for="name" value="{{ __('Name') }}" />
-            <x-input id="name" type="text" class="block w-full mt-1" wire:model="state.name" required
-                autocomplete="name" />
+            <label for="name" class="block text-xs sm:text-sm font-semibold text-slate-600 mb-1.5">{{ __('Name') }}</label>
+            <input id="name" type="text" wire:model="state.name" required autocomplete="name"
+                class="focus-uds block w-full bg-slate-50 border border-slate-300 hover:border-slate-400 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 transition-all duration-200" />
             <x-input-error for="name" class="mt-2" />
         </div>
 
         <!-- Email -->
         <div class="col-span-6 sm:col-span-4">
-            <x-label for="email" value="{{ __('Email') }}" />
-            <x-input id="email" type="email" class="block w-full mt-1" wire:model="state.email" required
-                autocomplete="username" />
+            <label for="email" class="block text-xs sm:text-sm font-semibold text-slate-600 mb-1.5">{{ __('Email') }}</label>
+            <input id="email" type="email" wire:model="state.email" required autocomplete="username"
+                class="focus-uds block w-full bg-slate-50 border border-slate-300 hover:border-slate-400 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 transition-all duration-200" />
             <x-input-error for="email" class="mt-2" />
 
             @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::emailVerification()) &&
                     !$this->user->hasVerifiedEmail())
-                <p class="mt-2 text-sm">
+                <p class="mt-2 text-xs sm:text-sm text-slate-500 font-medium">
                     {{ __('Your email address is unverified.') }}
 
                     <button type="button"
-                        class="text-sm text-gray-600 underline rounded-md hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        class="text-xs sm:text-sm text-uds-orange hover:text-uds-orange/80 font-semibold hover:underline"
                         wire:click.prevent="sendEmailVerification">
                         {{ __('Click here to re-send the verification email.') }}
                     </button>
                 </p>
 
                 @if ($this->verificationLinkSent)
-                    <p class="mt-2 text-sm font-medium text-green-600">
+                    <p class="mt-2 text-xs sm:text-sm font-medium text-uds-green">
                         {{ __('A new verification link has been sent to your email address.') }}
                     </p>
                 @endif
@@ -88,21 +89,22 @@
 
         <!-- Company Email -->
         <div class="col-span-6 sm:col-span-4">
-            <x-label for="company_email" value="{{ __('Company Email') }}" />
-            <x-input id="company_email" type="email" class="block w-full mt-1" wire:model.defer="state.company_email"
-                autocomplete="company_email" />
+            <label for="company_email" class="block text-xs sm:text-sm font-semibold text-slate-600 mb-1.5">{{ __('Company Email') }}</label>
+            <input id="company_email" type="email" wire:model.defer="state.company_email" autocomplete="company_email"
+                class="focus-uds block w-full bg-slate-50 border border-slate-300 hover:border-slate-400 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 transition-all duration-200" />
             <x-input-error for="company_email" class="mt-2" />
         </div>
 
     </x-slot>
 
     <x-slot name="actions">
-        <x-action-message class="me-3" on="saved">
+        <x-action-message class="me-3 text-xs sm:text-sm font-semibold text-uds-green" on="saved">
             {{ __('Saved.') }}
         </x-action-message>
 
-        <x-button wire:loading.attr="disabled" wire:target="photo">
+        <button type="submit" wire:loading.attr="disabled" wire:target="photo"
+            class="btn-uds inline-flex items-center justify-center text-white text-sm sm:text-base font-semibold px-6 py-3 rounded-xl shadow-lg hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50">
             {{ __('Save') }}
-        </x-button>
+        </button>
     </x-slot>
 </x-form-section>
