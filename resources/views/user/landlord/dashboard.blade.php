@@ -277,11 +277,12 @@
                         </div>
                         <div>
                             <p class="text-xs font-bold text-uds-navy">Taxation Center</p>
-                            <p class="text-[10px] text-slate-400 font-medium">Rental Income Tax & Property Tax reporting</p>
+                            <p class="text-[10px] text-slate-400 font-medium">Rental Income Tax, VAT & Property Tax reporting</p>
                         </div>
                     </div>
                     <div class="flex gap-2">
                         <a href="{{ route('landlord.rental-income-tax') }}" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition">Income Tax</a>
+                        <a href="{{ route('landlord.vat') }}" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition">VAT</a>
                         <a href="{{ route('landlord.property-tax') }}" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition">Property Tax</a>
                     </div>
                 </div>

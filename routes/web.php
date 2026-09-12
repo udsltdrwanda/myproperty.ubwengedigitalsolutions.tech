@@ -18,6 +18,7 @@ use App\Http\Controllers\User\landlord\Property\PropertyController;
 use App\Http\Controllers\User\landlord\Property\PropertyManagersController;
 use App\Http\Controllers\User\landlord\PropertyTax\PropertyTaxController;
 use App\Http\Controllers\User\landlord\RentalIncomeTax\RentalIncomeTaxController;
+use App\Http\Controllers\User\landlord\Vat\VatController;
 use App\Http\Controllers\User\landlord\Tenant\TenantController;
 use App\Livewire\User\LandLord\Adjacement\AdjacementLivewire;
 use App\Livewire\User\LandLord\Adjacement\BuildingAdjacementLivewire;
@@ -57,6 +58,7 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session'), 'verified']
             Route::get('/RentRecord', [RentRecordController::class, 'index'])->name('RentRecord');
             Route::get('/Amenity', [PropertyAmenityController::class, 'index'])->name('amenity');
             Route::get('/RentalIncomeTax', [RentalIncomeTaxController::class, 'index'])->name('rental-income-tax');
+            Route::get('/Vat', [VatController::class, 'index'])->name('vat');
             Route::get('/PropertyTax', [PropertyTaxController::class, 'index'])->name('property-tax');
             Route::get('/landlord/adjacement', AdjacementLivewire::class)->name('adjacement');
             Route::get('/landlord/land/adjacement', LandAdjacementLivewire::class)->name('land.adjacement');

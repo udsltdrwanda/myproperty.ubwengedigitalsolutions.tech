@@ -158,6 +158,7 @@
             @php
                 $reportItems = [
                     ['route' => 'landlord.rental-income-tax', 'icon' => 'fa-percent',          'label' => 'Rental Income Tax'],
+                    ['route' => 'landlord.vat',               'icon' => 'fa-receipt',          'label' => 'VAT'],
                     ['route' => 'landlord.property-tax',      'icon' => 'fa-hand-holding-usd', 'label' => 'Property Tax'],
                     ['route' => 'landlord.tax-calculator',    'icon' => 'fa-calculator',        'label' => 'Tax Calculator'],
                     ['route' => 'landlord.crm-analytics',     'icon' => 'fa-chart-line',        'label' => 'CRM Analytics'],
