@@ -1,366 +1,293 @@
 <x-app-layout>
-    @php
-        $landlordId = Auth::user()->landlord_id;
-
-        // Get total properties
-        $totalProperties = \App\Models\Property::where('landlord_id', $landlordId)->count();
-
-        // Get total houses
-        $totalHouses = \App\Models\House::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->count();
-
-        // Get property units statistics
-        $totalUnits = \App\Models\PropertyUnit::whereHas('house.property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->count();
-
-        $vacantUnits = \App\Models\PropertyUnit::whereHas('house.property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->whereDoesntHave('activeRentRecord')->count();
-
-        $occupiedUnits = \App\Models\PropertyUnit::whereHas('house.property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->whereHas('activeRentRecord')->count();
-
-        $maintenanceUnits = \App\Models\PropertyUnit::whereHas('house.property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->where('unit_status', 'maintenance')->count();
-
-        $occupancyRate = $totalUnits > 0 ? round(($occupiedUnits / $totalUnits) * 100, 1) : 0;
-
-        // Get total clients/tenants
-        $totalTenants = \App\Models\Tenant::where('landlord_id', $landlordId)->count();
-
-        // Get invoice statistics
-        $totalInvoices = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->count();
-
-        $pendingInvoices = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->where('invoice_status', 'Pending')->count();
-
-        $paidInvoices = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->where('invoice_status', 'Paid')->count();
-
-        $partialInvoices = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->where('invoice_status', 'Partial')->count();
-
-        $canceledInvoices = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->where('invoice_status', 'Canceled')->count();
-
-        // Calculate Revenue statistics
-        $totalInvoicedAmount = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->where('invoice_status', '!=', 'Canceled')->sum('amount');
-
-        $collectedAmount = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->where('invoice_status', 'Paid')->sum('amount');
-
-        $outstandingAmount = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->whereIn('invoice_status', ['Pending', 'Partial'])->sum('amount');
-
-        // Get paid invoices with EBM invoices
-        $paidInvoicesWithEbm = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })
-        ->where('invoice_status', 'Paid')
-        ->whereHas('ebmInvoice')
-        ->count();
-
-        $paidInvoicesWithoutEbm = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })
-        ->where('invoice_status', 'Paid')
-        ->whereDoesntHave('ebmInvoice')
-        ->count();
-
-        // Fetch recent invoices (last 5)
-        $recentInvoicesList = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })->with(['property', 'tenant'])->latest()->limit(5)->get();
-
-        // Get monthly billing metrics (past 6 months)
-        $monthlyBilling = \App\Models\Invoice::whereHas('property', function($query) use ($landlordId) {
-            $query->where('landlord_id', $landlordId);
-        })
-        ->selectRaw("DATE_FORMAT(created_at, '%b %Y') as month, SUM(amount) as total, MIN(created_at) as sort_date")
-        ->groupBy('month')
-        ->orderBy('sort_date')
-        ->limit(6)
-        ->get();
-
-        $monthlyMonths = $monthlyBilling->pluck('month')->toArray();
-        $monthlyTotals = $monthlyBilling->pluck('total')->toArray();
-
-        if (empty($monthlyMonths)) {
-            $monthlyMonths = [now()->format('b Y')];
-            $monthlyTotals = [0];
-        }
-    @endphp
-
-
-
-    <!-- Core performance metrics KPI Row -->
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        
-        <!-- Total Rent Collected -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:border-uds-blue transition-colors duration-200">
-            <div class="flex items-center justify-between">
+    <div class="mb-6 p-5 bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.01)]">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+                     style="background:linear-gradient(135deg,#003b70,#0b2545);">
+                    <i class="fas fa-chart-pie text-white"></i>
+                </div>
                 <div>
-                    <p class="text-xs sm:text-sm font-semibold text-slate-400">Total Rent Collected</p>
-                    <h3 class="mt-2 text-xl sm:text-2xl font-extrabold text-uds-navy">{{ number_format($collectedAmount) }} <span class="text-xs font-bold text-slate-500">RWF</span></h3>
-                </div>
-                <div class="p-3 bg-blue-50 rounded-xl text-uds-blue">
-                    <i class="text-xl fas fa-wallet"></i>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Portfolio Overview</p>
+                    <h1 class="text-lg sm:text-xl font-extrabold text-uds-navy leading-tight">Welcome back, {{ $user->name }}</h1>
+                    <p class="text-xs font-medium text-slate-400 mt-0.5">{{ now()->format('l, d F Y') }} · Year-to-date {{ $year }}</p>
                 </div>
             </div>
-            @php
-                $collectionProgress = $totalInvoicedAmount > 0 ? round(($collectedAmount / $totalInvoicedAmount) * 100, 1) : 0;
-            @endphp
-            <div class="mt-4">
-                <div class="flex justify-between text-[11px] font-bold text-slate-500 mb-1">
-                    <span>Collection Rate</span>
-                    <span>{{ $collectionProgress }}%</span>
-                </div>
-                <div class="w-full bg-slate-100 rounded-full h-1.5">
-                    <div class="bg-uds-blue h-1.5 rounded-full" style="width: {{ $collectionProgress }}%"></div>
-                </div>
-            </div>
-            <div class="mt-3 text-[11px] text-slate-400 font-semibold flex justify-between border-t border-slate-50 pt-2.5">
-                <span>Total Invoiced:</span>
-                <span class="text-slate-700 font-bold">{{ number_format($totalInvoicedAmount) }} RWF</span>
-            </div>
-        </div>
-
-        <!-- Occupancy & Tenant Count -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:border-uds-orange transition-colors duration-200">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs sm:text-sm font-semibold text-slate-400">Occupancy & Tenants</p>
-                    <h3 class="mt-2 text-xl sm:text-2xl font-extrabold text-uds-navy">{{ $occupancyRate }}%</h3>
-                </div>
-                <div class="p-3 bg-orange-50 rounded-xl text-uds-orange">
-                    <i class="text-xl fas fa-key"></i>
-                </div>
-            </div>
-            <div class="mt-4">
-                <div class="w-full bg-slate-100 rounded-full h-1.5">
-                    <div class="bg-uds-orange h-1.5 rounded-full" style="width: {{ $occupancyRate }}%"></div>
-                </div>
-            </div>
-            <div class="space-y-1.5 mt-3 text-xs font-semibold text-slate-500 border-t border-slate-50 pt-2.5 flex justify-between items-center">
-                <span>Active Tenants:</span>
-                <span class="text-slate-800 font-extrabold">{{ $totalTenants }} Registered</span>
-            </div>
-        </div>
-
-        <!-- Asset Metrics -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:border-uds-green transition-colors duration-200">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs sm:text-sm font-semibold text-slate-400">Properties & Units</p>
-                    <h3 class="mt-2 text-xl sm:text-2xl font-extrabold text-uds-navy">{{ $totalProperties }} <span class="text-xs font-bold text-slate-500">Listed</span></h3>
-                </div>
-                <div class="p-3 bg-green-50 rounded-xl text-uds-green">
-                    <i class="text-xl fas fa-building"></i>
-                </div>
-            </div>
-            <div class="space-y-2 mt-4 pt-2.5 border-t border-slate-100 text-xs font-semibold text-slate-500">
-                <div class="flex justify-between">
-                    <span>Total Houses:</span>
-                    <span class="text-slate-800 font-bold">{{ $totalHouses }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span>Total Units:</span>
-                    <span class="text-slate-800 font-bold">{{ $totalUnits }} ({{ $vacantUnits }} vacant)</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pending Collections -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] hover:border-red-500 transition-colors duration-200">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs sm:text-sm font-semibold text-slate-400">Pending Collections</p>
-                    <h3 class="mt-2 text-xl sm:text-2xl font-extrabold text-red-500">{{ number_format($outstandingAmount) }} <span class="text-xs font-bold text-slate-500">RWF</span></h3>
-                </div>
-                <div class="p-3 bg-red-50 rounded-xl text-red-500">
-                    <i class="text-xl fas fa-file-invoice-dollar"></i>
-                </div>
-            </div>
-            <div class="space-y-2 mt-4 pt-2.5 border-t border-slate-100 text-xs font-semibold text-slate-500">
-                <div class="flex justify-between">
-                    <span>Unpaid Invoices:</span>
-                    <span class="text-red-500 font-bold">{{ $pendingInvoices }}</span>
-                </div>
-                <div class="flex justify-between">
-                    <span>Paid Invoices:</span>
-                    <span class="text-emerald-500 font-bold">{{ $paidInvoices }}</span>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Analytics Charts Row -->
-    <div class="mb-8">
-        <!-- Compliance & Invoice Status Charts (Combined Container) -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h4 class="text-base font-bold text-uds-navy">Invoices & Tax Compliance</h4>
-                    <p class="text-xs text-slate-400 font-medium">Compliance stats and invoice distribution</p>
-                </div>
-                <div class="p-2.5 bg-teal-50 rounded-xl text-teal-600">
-                    <i class="text-lg fas fa-chart-pie"></i>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 h-64">
-                <div class="relative h-full flex flex-col justify-center items-center">
-                    <p class="text-xs font-bold text-slate-400 mb-2">Invoice Status</p>
-                    <div class="w-full h-48 relative">
-                        <canvas id="invoiceStatusChart"></canvas>
-                    </div>
-                </div>
-                <div class="relative h-full flex flex-col justify-center items-center">
-                    <p class="text-xs font-bold text-slate-400 mb-2">EBM Compliance</p>
-                    <div class="w-full h-48 relative">
-                        <canvas id="ebmInvoiceChart"></canvas>
-                    </div>
-                </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-extrabold rounded-xl text-white"
+                      style="background:linear-gradient(135deg,#003b70,#0b2545);">
+                    <i class="fas fa-calendar-alt text-[9px]"></i> {{ $year }} Summary
+                </span>
+                <a href="{{ route('landlord.crm-analytics') }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-xl border border-slate-200 text-slate-600 hover:border-uds-blue hover:text-uds-blue transition">
+                    CRM
+                </a>
+                <a href="{{ route('landlord.invoice') }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-xl text-white"
+                   style="background:#f39200;">
+                    Invoices
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Services Hub & Recent Activity Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        
-        <!-- Services Control Panel -->
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] p-6">
-            <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
-                <div>
-                    <h4 class="text-base font-bold text-uds-navy">Services Control Hub</h4>
-                    <p class="text-xs text-slate-400 font-medium">Quick links to active modules and settings</p>
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        @php
+            $kpis = [
+                ['label' => 'Total Billed', 'value' => number_format($totalBilled).' RWF', 'sub' => 'Rent + VAT in '.$year, 'icon' => 'fa-file-invoice-dollar', 'color' => '#003b70', 'light' => 'rgba(0,59,112,0.08)'],
+                ['label' => 'Collected', 'value' => number_format($collectedAmount).' RWF', 'sub' => $collectionRate.'% collection rate', 'icon' => 'fa-wallet', 'color' => '#2d9d3f', 'light' => 'rgba(45,157,63,0.10)'],
+                ['label' => 'Outstanding', 'value' => number_format($outstandingAmount).' RWF', 'sub' => $pendingInvoices + $partialInvoices.' open invoices', 'icon' => 'fa-exclamation-circle', 'color' => '#dc2626', 'light' => 'rgba(220,38,38,0.08)'],
+                ['label' => 'Occupancy', 'value' => $occupancyRate.'%', 'sub' => $occupiedUnits.' of '.$totalUnits.' units occupied', 'icon' => 'fa-key', 'color' => '#f39200', 'light' => 'rgba(243,146,0,0.10)'],
+            ];
+        @endphp
+        @foreach($kpis as $kpi)
+            <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">{{ $kpi['label'] }}</p>
+                        <p class="text-lg sm:text-xl font-extrabold mt-1 leading-tight truncate" style="color:{{ $kpi['color'] }}">{{ $kpi['value'] }}</p>
+                        <p class="text-[10px] font-semibold text-slate-400 mt-1">{{ $kpi['sub'] }}</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background:{{ $kpi['light'] }}">
+                        <i class="fas {{ $kpi['icon'] }} text-sm" style="color:{{ $kpi['color'] }}"></i>
+                    </div>
                 </div>
-                <div class="p-2.5 bg-slate-50 rounded-xl text-slate-500">
-                    <i class="text-lg fas fa-th-large"></i>
-                </div>
+                @if($kpi['label'] === 'Collected')
+                    <div class="mt-3 w-full bg-slate-100 rounded-full h-1.5">
+                        <div class="h-1.5 rounded-full" style="width: {{ min($collectionRate, 100) }}%; background:#2d9d3f;"></div>
+                    </div>
+                @elseif($kpi['label'] === 'Occupancy')
+                    <div class="mt-3 w-full bg-slate-100 rounded-full h-1.5">
+                        <div class="h-1.5 rounded-full" style="width: {{ min($occupancyRate, 100) }}%; background:#f39200;"></div>
+                    </div>
+                @endif
             </div>
-            
-            <div class="space-y-4">
-                <!-- Managers -->
-                <div class="flex items-center justify-between p-3.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-xl transition duration-150">
-                    <div class="flex items-center gap-3.5">
-                        <div class="p-2.5 bg-blue-50 rounded-lg text-uds-blue text-sm">
-                            <i class="fas fa-user-tie"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-uds-navy">Assistant Managers</p>
-                            <p class="text-[10px] text-slate-400 font-medium">Configure roles and dashboard access rights</p>
-                        </div>
-                    </div>
-                    <a href="{{ route('landlord.property.manager') }}" class="px-3 py-1.5 bg-uds-blue hover:bg-[#002f5a] text-white text-[11px] font-bold rounded-lg transition">Manage</a>
-                </div>
+        @endforeach
+    </div>
 
-                <!-- Taxation Center -->
-                <div class="flex items-center justify-between p-3.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-xl transition duration-150">
-                    <div class="flex items-center gap-3.5">
-                        <div class="p-2.5 bg-green-50 rounded-lg text-uds-green text-sm">
-                            <i class="fas fa-university"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-uds-navy">Taxation Center</p>
-                            <p class="text-[10px] text-slate-400 font-medium">Rental Income Tax, VAT & Property Tax reporting</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <a href="{{ route('landlord.rental-income-tax') }}" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition">Income Tax</a>
-                        <a href="{{ route('landlord.vat') }}" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition">VAT</a>
-                        <a href="{{ route('landlord.property-tax') }}" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold rounded-lg transition">Property Tax</a>
-                    </div>
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-sm font-extrabold text-uds-navy">Portfolio</h3>
+                    <p class="text-[10px] font-semibold text-slate-400">Properties, buildings and units</p>
                 </div>
-
-                <!-- Payment Modes -->
-                <div class="flex items-center justify-between p-3.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-xl transition duration-150">
-                    <div class="flex items-center gap-3.5">
-                        <div class="p-2.5 bg-orange-50 rounded-lg text-uds-orange text-sm">
-                            <i class="fas fa-credit-card"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-uds-navy">Payment Settings</p>
-                            <p class="text-[10px] text-slate-400 font-medium">Add payment gateways, banking info, and MoMo codes</p>
-                        </div>
+                <a href="{{ route('landlord.property') }}" class="text-[10px] font-bold text-uds-orange hover:underline">Manage</a>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                @foreach([
+                    ['Properties', $totalProperties, '#003b70'],
+                    ['Houses', $totalHouses, '#0b2545'],
+                    ['Units', $totalUnits, '#2d9d3f'],
+                    ['Vacant', $vacantUnits, '#f39200'],
+                    ['Occupied', $occupiedUnits, '#059669'],
+                    ['Maintenance', $maintenanceUnits, '#dc2626'],
+                ] as [$lbl, $val, $col])
+                    <div class="p-3 rounded-xl" style="background:#f8fafc;">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">{{ $lbl }}</p>
+                        <p class="text-lg font-extrabold mt-0.5" style="color:{{ $col }}">{{ $val }}</p>
                     </div>
-                    <a href="{{ route('landlord.paymentmode') }}" class="px-3 py-1.5 bg-uds-orange hover:bg-orange-600 text-white text-[11px] font-bold rounded-lg transition">Configure</a>
-                </div>
-
-                <!-- Petty Cash -->
-                <div class="flex items-center justify-between p-3.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-xl transition duration-150">
-                    <div class="flex items-center gap-3.5">
-                        <div class="p-2.5 bg-rose-50 rounded-lg text-rose-500 text-sm">
-                            <i class="fas fa-hand-holding-usd"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-uds-navy">Petty Cash Ledgers</p>
-                            <p class="text-[10px] text-slate-400 font-medium">Log direct expenses, office costs, and internal flow</p>
-                        </div>
-                    </div>
-                    <span class="px-3 py-1.5 bg-slate-100 text-slate-400 text-[11px] font-bold rounded-lg select-none">No records</span>
-                </div>
+                @endforeach
             </div>
         </div>
 
-        <!-- Recent Invoices Table -->
-        <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden">
-            <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+            <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h4 class="text-base font-bold text-uds-navy">Recent Invoices</h4>
-                    <p class="text-xs text-slate-400 font-medium">Overview of the latest billing statements</p>
+                    <h3 class="text-sm font-extrabold text-uds-navy">Clients & Contracts</h3>
+                    <p class="text-[10px] font-semibold text-slate-400">Active tenancy this period</p>
                 </div>
-                <a href="{{ route('landlord.invoice') }}" class="text-xs font-bold text-uds-orange hover:underline">View All &rarr;</a>
+                <a href="{{ route('landlord.tenant') }}" class="text-[10px] font-bold text-uds-orange hover:underline">Clients</a>
+            </div>
+            <div class="space-y-3">
+                @foreach([
+                    ['Registered clients', $totalTenants],
+                    ['Active tenants', $activeTenants],
+                    ['Live contracts', $activeContracts],
+                    ['Expiring in 60 days', $expiringContracts->count()],
+                ] as [$lbl, $val])
+                    <div class="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
+                        <span class="text-xs font-semibold text-slate-500">{{ $lbl }}</span>
+                        <span class="text-sm font-extrabold text-uds-navy">{{ $val }}</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-sm font-extrabold text-uds-navy">{{ $year }} Financials</h3>
+                    <p class="text-[10px] font-semibold text-slate-400">Rent, VAT and collections</p>
+                </div>
+                <a href="{{ route('landlord.vat') }}" class="text-[10px] font-bold text-uds-orange hover:underline">VAT report</a>
+            </div>
+            <div class="space-y-3">
+                @foreach([
+                    ['Rental amount', number_format($rentAmount).' RWF', '#003b70'],
+                    ['VAT (18%)', number_format($vatAmount).' RWF', '#f39200'],
+                    ['Total billed', number_format($totalBilled).' RWF', '#0b2545'],
+                    ['Collected', number_format($collectedAmount).' RWF', '#2d9d3f'],
+                    ['Outstanding', number_format($outstandingAmount).' RWF', '#dc2626'],
+                ] as [$lbl, $val, $col])
+                    <div class="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
+                        <span class="text-xs font-semibold text-slate-500">{{ $lbl }}</span>
+                        <span class="text-xs font-extrabold" style="color:{{ $col }}">{{ $val }}</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+        <div class="xl:col-span-2 bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-sm font-extrabold text-uds-navy">Billing Trend</h3>
+                    <p class="text-[10px] font-semibold text-slate-400">Billed vs collected over the last 6 months</p>
+                </div>
+            </div>
+            <div class="h-64">
+                <canvas id="billingTrendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-sm font-extrabold text-uds-navy">Invoice Mix</h3>
+                    <p class="text-[10px] font-semibold text-slate-400">{{ $totalInvoices }} invoices in {{ $year }}</p>
+                </div>
+            </div>
+            <div class="h-40 mb-4">
+                <canvas id="invoiceStatusChart"></canvas>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                @foreach([
+                    ['Paid', $paidInvoices, '#2d9d3f'],
+                    ['Pending', $pendingInvoices, '#f39200'],
+                    ['Partial', $partialInvoices, '#003b70'],
+                    ['Canceled', $canceledInvoices, '#ef4444'],
+                ] as [$lbl, $val, $col])
+                    <div class="flex items-center justify-between px-2.5 py-2 rounded-xl" style="background:#f8fafc;">
+                        <span class="text-[10px] font-bold text-slate-500">{{ $lbl }}</span>
+                        <span class="text-xs font-extrabold" style="color:{{ $col }}">{{ $val }}</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-sm font-extrabold text-uds-navy">Tax Summary {{ $year }}</h3>
+                    <p class="text-[10px] font-semibold text-slate-400">Estimated from current invoice and adjacement data</p>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <a href="{{ route('landlord.rental-income-tax') }}" class="block p-3.5 rounded-xl border border-slate-100 hover:border-uds-blue transition">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Rental Income Tax</p>
+                    <p class="text-lg font-extrabold text-uds-navy mt-1">{{ number_format($rentalTaxEstimate) }} <span class="text-xs text-slate-400">RWF</span></p>
+                    <p class="text-[10px] font-semibold text-slate-400 mt-1">On {{ number_format($rentAmount) }} RWF rental income</p>
+                </a>
+                <a href="{{ route('landlord.vat') }}" class="block p-3.5 rounded-xl border border-slate-100 hover:border-uds-orange transition">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">VAT (18%)</p>
+                    <p class="text-lg font-extrabold mt-1" style="color:#f39200;">{{ number_format($vatAmount) }} <span class="text-xs text-slate-400">RWF</span></p>
+                    <p class="text-[10px] font-semibold text-slate-400 mt-1">Included in {{ number_format($totalBilled) }} RWF billed</p>
+                </a>
+                <a href="{{ route('landlord.property-tax') }}" class="block p-3.5 rounded-xl border border-slate-100 hover:border-uds-green transition">
+                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Property Tax</p>
+                    <p class="text-lg font-extrabold mt-1" style="color:#2d9d3f;">{{ number_format($propertyTax) }} <span class="text-xs text-slate-400">RWF</span></p>
+                    <p class="text-[10px] font-semibold text-slate-400 mt-1">Land + building adjacement for {{ $year }}</p>
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-sm font-extrabold text-uds-navy">EBM Compliance</h3>
+                    <p class="text-[10px] font-semibold text-slate-400">Paid invoices with EBM attachment</p>
+                </div>
+            </div>
+            <div class="h-40 mb-3">
+                <canvas id="ebmInvoiceChart"></canvas>
+            </div>
+            <div class="flex items-center justify-between text-xs font-semibold">
+                <span class="text-emerald-600">Compliant {{ $paidWithEbm }}</span>
+                <span class="text-slate-400">Missing {{ $paidWithoutEbm }}</span>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-sm font-extrabold text-uds-navy">Contracts Expiring</h3>
+                    <p class="text-[10px] font-semibold text-slate-400">Next 60 days</p>
+                </div>
+                <a href="{{ route('landlord.RentRecord') }}" class="text-[10px] font-bold text-uds-orange hover:underline">Records</a>
+            </div>
+            <div class="space-y-2.5">
+                @forelse($expiringContracts as $record)
+                    <div class="flex items-center justify-between p-3 rounded-xl" style="background:#f8fafc;">
+                        <div class="min-w-0">
+                            <p class="text-xs font-extrabold text-uds-navy truncate">{{ $record->tenant->tenant_name ?? 'Tenant' }}</p>
+                            <p class="text-[10px] font-semibold text-slate-400 truncate">{{ optional($record->unit->house)->name ?? 'Unit' }}</p>
+                        </div>
+                        <span class="text-[10px] font-extrabold text-uds-orange shrink-0">{{ \Carbon\Carbon::parse($record->end_date)->format('d M Y') }}</span>
+                    </div>
+                @empty
+                    <p class="text-xs font-semibold text-slate-400 py-8 text-center">No contracts expiring in the next 60 days.</p>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-8">
+        <div class="xl:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgb(0,0,0,0.03)] overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-extrabold text-uds-navy">Recent Invoices</h3>
+                    <p class="text-[10px] font-semibold text-slate-400">Latest billing statements</p>
+                </div>
+                <a href="{{ route('landlord.invoice') }}" class="text-[10px] font-bold text-uds-orange hover:underline">View all</a>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left">
                     <thead>
-                        <tr class="bg-slate-50/70 border-b border-slate-100">
-                            <th class="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Invoice No</th>
-                            <th class="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tenant</th>
-                            <th class="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-right">Amount</th>
-                            <th class="py-3 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">Status</th>
+                        <tr style="background:#f8fafc;">
+                            @foreach(['Invoice','Client','Amount','VAT','Total','Status'] as $th)
+                                <th class="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ $th }}</th>
+                            @endforeach
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        @forelse ($recentInvoicesList as $invoice)
-                            <tr class="hover:bg-slate-50/50 transition duration-150">
-                                <td class="py-3.5 px-4 text-xs font-bold text-uds-navy">{{ $invoice->invoice_no }}</td>
-                                <td class="py-3.5 px-4 text-xs font-semibold text-slate-700">
-                                    {{ $invoice->tenant->tenant_name ?? 'N/A' }}
-                                </td>
-                                <td class="py-3.5 px-4 text-xs font-extrabold text-uds-navy text-right">{{ number_format($invoice->amount) }} RWF</td>
-                                <td class="py-3.5 px-4 text-center">
-                                    @if($invoice->invoice_status === 'Paid')
-                                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200/50">Paid</span>
-                                    @elseif($invoice->invoice_status === 'Pending')
-                                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded bg-amber-50 text-amber-700 border border-amber-200/50">Pending</span>
-                                    @elseif($invoice->invoice_status === 'Partial')
-                                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded bg-blue-50 text-blue-700 border border-blue-200/50">Partial</span>
-                                    @else
-                                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded bg-red-50 text-red-700 border border-red-200/50">{{ $invoice->invoice_status }}</span>
-                                    @endif
+                    <tbody>
+                        @forelse($recentInvoices as $invoice)
+                            <tr class="border-t border-slate-50">
+                                <td class="py-3.5 px-4 text-xs font-extrabold text-uds-navy">{{ $invoice->invoice_no }}</td>
+                                <td class="py-3.5 px-4 text-xs font-semibold text-slate-600">{{ $invoice->tenant->tenant_name ?? 'N/A' }}</td>
+                                <td class="py-3.5 px-4 text-xs font-bold text-slate-700">{{ number_format($invoice->amount) }}</td>
+                                <td class="py-3.5 px-4 text-xs font-bold" style="color:#f39200;">{{ number_format($invoice->vat) }}</td>
+                                <td class="py-3.5 px-4 text-xs font-extrabold text-uds-navy">{{ number_format($invoice->amount + $invoice->vat) }}</td>
+                                <td class="py-3.5 px-4">
+                                    @php
+                                        $statusStyles = [
+                                            'Paid' => 'background:#ecfdf5;color:#047857;',
+                                            'Pending' => 'background:#fff7ed;color:#c2410c;',
+                                            'Partial' => 'background:#eff6ff;color:#1d4ed8;',
+                                            'Canceled' => 'background:#fef2f2;color:#b91c1c;',
+                                        ];
+                                    @endphp
+                                    <span class="inline-flex px-2 py-0.5 text-[10px] font-extrabold rounded-lg"
+                                          style="{{ $statusStyles[$invoice->invoice_status] ?? 'background:#f8fafc;color:#64748b;' }}">
+                                        {{ $invoice->invoice_status }}
+                                    </span>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="py-8 px-4 text-center text-xs font-semibold text-slate-400 bg-slate-50/10">
-                                    No records found
-                                </td>
+                                <td colspan="6" class="py-10 text-center text-xs font-semibold text-slate-400">No invoices yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -368,94 +295,116 @@
             </div>
         </div>
 
+        <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
+            <h3 class="text-sm font-extrabold text-uds-navy mb-1">Quick Actions</h3>
+            <p class="text-[10px] font-semibold text-slate-400 mb-4">Jump to the most used modules</p>
+            <div class="space-y-2">
+                @foreach([
+                    ['landlord.invoice', 'fa-file-invoice-dollar', 'Create / view invoices', '#003b70'],
+                    ['landlord.RentRecord', 'fa-file-signature', 'Rent records', '#0b2545'],
+                    ['landlord.tenant', 'fa-user-friends', 'Client directory', '#2d9d3f'],
+                    ['landlord.rental-income-tax', 'fa-percent', 'Rental income tax', '#f39200'],
+                    ['landlord.vat', 'fa-receipt', 'VAT report', '#ea580c'],
+                    ['landlord.property-tax', 'fa-hand-holding-usd', 'Property tax', '#059669'],
+                    ['landlord.crm-analytics', 'fa-chart-line', 'CRM analytics', '#7c3aed'],
+                    ['landlord.paymentmode', 'fa-credit-card', 'Payment modes', '#0369a1'],
+                ] as [$route, $icon, $label, $color])
+                    <a href="{{ route($route) }}"
+                       class="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-slate-100 hover:border-slate-200 transition">
+                        <span class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style="background:{{ $color }}14;">
+                            <i class="fas {{ $icon }} text-xs" style="color:{{ $color }}"></i>
+                        </span>
+                        <span class="text-xs font-bold text-slate-700">{{ $label }}</span>
+                    </a>
+                @endforeach
+            </div>
+        </div>
     </div>
 
-    <!-- Chart JS Integrations -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // 1. Invoice Status Distribution Chart
-            const statusCtx = document.getElementById('invoiceStatusChart').getContext('2d');
-            new Chart(statusCtx, {
+        document.addEventListener('DOMContentLoaded', function () {
+            const font = { family: 'Outfit', size: 11 };
+            const tooltip = {
+                backgroundColor: '#0b2545',
+                titleFont: { family: 'Outfit', size: 11, weight: 'bold' },
+                bodyFont: { family: 'Outfit', size: 11 },
+                padding: 8
+            };
+
+            new Chart(document.getElementById('billingTrendChart'), {
+                type: 'line',
+                data: {
+                    labels: @json($monthlyTrend['labels']),
+                    datasets: [
+                        {
+                            label: 'Billed',
+                            data: @json($monthlyTrend['billed']),
+                            borderColor: '#003b70',
+                            backgroundColor: 'rgba(0,59,112,0.08)',
+                            fill: true,
+                            tension: 0.35,
+                            borderWidth: 2,
+                            pointRadius: 3
+                        },
+                        {
+                            label: 'Collected',
+                            data: @json($monthlyTrend['collected']),
+                            borderColor: '#2d9d3f',
+                            backgroundColor: 'rgba(45,157,63,0.08)',
+                            fill: true,
+                            tension: 0.35,
+                            borderWidth: 2,
+                            pointRadius: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { font, boxWidth: 10 } }, tooltip },
+                    scales: {
+                        x: { ticks: { font }, grid: { display: false } },
+                        y: { ticks: { font, callback: v => Number(v).toLocaleString() }, grid: { color: '#f1f5f9' } }
+                    }
+                }
+            });
+
+            new Chart(document.getElementById('invoiceStatusChart'), {
                 type: 'doughnut',
                 data: {
                     labels: ['Paid', 'Pending', 'Partial', 'Canceled'],
                     datasets: [{
                         data: [{{ $paidInvoices }}, {{ $pendingInvoices }}, {{ $partialInvoices }}, {{ $canceledInvoices }}],
-                        backgroundColor: [
-                            '#2d9d3f',  // Green (UDS Green)
-                            '#f39200',  // Orange (UDS Orange)
-                            '#003b70',  // Blue (UDS Blue)
-                            '#ef4444'   // Red
-                        ],
-                        borderColor: '#ffffff',
+                        backgroundColor: ['#2d9d3f', '#f39200', '#003b70', '#ef4444'],
+                        borderColor: '#fff',
                         borderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '72%',
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: '#0b2545',
-                            titleFont: { family: 'Outfit', size: 11, weight: 'bold' },
-                            bodyFont: { family: 'Outfit', size: 11 },
-                            padding: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                    return ` ${context.label}: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
+                    cutout: '70%',
+                    plugins: { legend: { display: false }, tooltip }
                 }
             });
 
-            // 3. EBM Invoice Chart
-            const ebmCtx = document.getElementById('ebmInvoiceChart').getContext('2d');
-            new Chart(ebmCtx, {
-                type: 'pie',
+            new Chart(document.getElementById('ebmInvoiceChart'), {
+                type: 'doughnut',
                 data: {
-                    labels: ['EBM Compliant', 'Non-Compliant'],
+                    labels: ['EBM Compliant', 'Missing EBM'],
                     datasets: [{
-                        data: [{{ $paidInvoicesWithEbm }}, {{ $paidInvoicesWithoutEbm }}],
-                        backgroundColor: [
-                            '#2d9d3f',  // Green (UDS Green)
-                            '#e2e8f0'   // Gray (slate-200)
-                        ],
-                        borderColor: '#ffffff',
+                        data: [{{ $paidWithEbm }}, {{ $paidWithoutEbm }}],
+                        backgroundColor: ['#2d9d3f', '#e2e8f0'],
+                        borderColor: '#fff',
                         borderWidth: 2
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: '#0b2545',
-                            titleFont: { family: 'Outfit', size: 11, weight: 'bold' },
-                            bodyFont: { family: 'Outfit', size: 11 },
-                            padding: 8,
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                    return ` ${context.label}: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
+                    cutout: '70%',
+                    plugins: { legend: { display: false }, tooltip }
                 }
             });
         });
