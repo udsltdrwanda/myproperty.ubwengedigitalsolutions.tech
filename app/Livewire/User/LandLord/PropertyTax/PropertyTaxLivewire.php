@@ -106,9 +106,19 @@ class PropertyTaxLivewire extends Component
                 ];
             });
 
+        $hasAdjacementForYear = LandAdjacement::query()
+            ->where('landlord_id', $userId)
+            ->where('year', $currentYear)
+            ->exists()
+            || HouseAdjacement::query()
+                ->where('landlord_id', $userId)
+                ->where('year', $currentYear)
+                ->exists();
+
         return view('livewire.user.land-lord.property-tax.property-tax-livewire', [
             'propertiesByDistrict' => $propertiesByDistrict,
             'availableYears' => $this->availableYears(),
+            'hasAdjacementForYear' => $hasAdjacementForYear,
         ]);
     }
 }

@@ -15,6 +15,30 @@
         </p>
     </div>
 
+    @unless ($hasAdjacementForYear)
+        <div class="px-5 py-4 bg-orange-50 border border-orange-100 rounded-2xl">
+            <p class="text-xs font-extrabold text-uds-navy">No adjacement values for {{ $year }}</p>
+            <p class="text-[11px] font-medium text-slate-500 mt-1 leading-relaxed">
+                Property tax uses land and building assessment values, not invoices.
+                Your 2023 invoices appear on
+                <a href="{{ route('landlord.rental-income-tax') }}" class="font-bold text-uds-orange hover:underline">Rental Income Tax</a>.
+                To see amounts here, add {{ $year }} values under Adjacement.
+            </p>
+            <div class="flex flex-wrap gap-2 mt-3">
+                <a href="{{ route('landlord.land.adjacement') }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-white rounded-xl"
+                   style="background:linear-gradient(135deg,#003b70,#0b2545);">
+                    <i class="fas fa-sliders-h text-[10px]"></i> Land Adjacement
+                </a>
+                <a href="{{ route('landlord.building.adjacement') }}"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-xl border"
+                   style="color:#003b70; border-color:#003b70;">
+                    Building Adjacement
+                </a>
+            </div>
+        </div>
+    @endunless
+
     @if ($propertiesByDistrict->isEmpty())
         {{-- Empty State --}}
         <div class="bg-white rounded-2xl border border-slate-100 p-14 text-center shadow-[0_4px_20px_rgb(0,0,0,0.03)]">
