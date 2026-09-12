@@ -17,6 +17,7 @@ class CrmAnalyticsLivewire extends Component
     public string $contractStatus   = '';   // active|expired
     public string $paymentRate      = '';   // high|medium|low
     public string $houseFilter      = '';   // house id
+    public string $year             = '';   // '' = all years
     public string $sortBy           = 'total_billed'; // total_billed|payment_rate|name|contracts
     public string $sortDir          = 'desc';
 
@@ -59,8 +60,86 @@ class CrmAnalyticsLivewire extends Component
         $this->contractStatus = '';
         $this->paymentRate    = '';
         $this->houseFilter    = '';
+        $this->year           = '';
         $this->sortBy         = 'total_billed';
         $this->sortDir        = 'desc';
+    }
+
+    private function yearRange(): ?array
+    {
+        if ($this->year === '' || $this->year === null) {
+            return null;
+        }
+
+        $year = (int) $this->year;
+
+        return [
+            Carbon::createFromDate($year, 1, 1)->startOfYear()->toDateString(),
+            Carbon::createFromDate($year, 12, 31)->endOfYear()->toDateString(),
+        ];
+    }
+
+    private function applyYearToInvoices($query)
+    {
+        $range = $this->yearRange();
+        if (!$range) {
+            return $query;
+        }
+
+        [$start, $end] = $range;
+
+        return $query->where(function ($q) use ($start, $end) {
+            $q->where(function ($dates) use ($start, $end) {
+                $dates->whereDate('start_date', '<=', $end)
+                    ->whereDate('end_date', '>=', $start);
+            })->orWhereHas('rentrecord', function ($contract) use ($start, $end) {
+                $contract->whereDate('start_date', '<=', $end)
+                    ->whereDate('end_date', '>=', $start);
+            });
+        });
+    }
+
+    private function applyYearToContracts($query)
+    {
+        $range = $this->yearRange();
+        if (!$range) {
+            return $query;
+        }
+
+        [$start, $end] = $range;
+
+        return $query->whereDate('start_date', '<=', $end)
+            ->whereDate('end_date', '>=', $start);
+    }
+
+    private function availableYears(): array
+    {
+        $landlordId = Auth::user()->landlord_id;
+        $current = (int) now()->year;
+
+        $fromInvoices = Invoice::query()
+            ->where('landlord_id', $landlordId)
+            ->whereNotNull('start_date')
+            ->selectRaw('YEAR(start_date) as y')
+            ->distinct()
+            ->pluck('y');
+
+        $fromContracts = RentRecord::query()
+            ->where('landlord_id', $landlordId)
+            ->whereNotNull('start_date')
+            ->selectRaw('YEAR(start_date) as y')
+            ->distinct()
+            ->pluck('y');
+
+        return $fromInvoices
+            ->merge($fromContracts)
+            ->map(fn ($year) => (int) $year)
+            ->filter(fn ($year) => $year >= 2000 && $year <= $current + 1)
+            ->merge(range($current, $current - 5))
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->all();
     }
 
     public function render()
@@ -70,6 +149,7 @@ class CrmAnalyticsLivewire extends Component
         // ── Base queries ──────────────────────────────────
         $rentQuery = RentRecord::with(['tenant', 'unit.house', 'invoices.payments'])
             ->where('landlord_id', $landlordId);
+        $this->applyYearToContracts($rentQuery);
 
         if ($this->houseFilter) {
             $rentQuery->whereHas('unit', fn($q) => $q->where('house_id', $this->houseFilter));
@@ -79,6 +159,7 @@ class CrmAnalyticsLivewire extends Component
 
         $invoiceQuery = Invoice::with(['tenant', 'unit.house', 'payments'])
             ->where('landlord_id', $landlordId);
+        $this->applyYearToInvoices($invoiceQuery);
 
         if ($this->houseFilter) {
             $invoiceQuery->whereHas('unit', fn($q) => $q->where('house_id', $this->houseFilter));
@@ -91,7 +172,11 @@ class CrmAnalyticsLivewire extends Component
         $allInvoices = $invoiceQuery->latest()->get();
 
         // ── Per-tenant profiles ───────────────────────────
-        $tenants = $rentRecords->pluck('tenant')->filter()->unique('id')->values();
+        $tenants = $rentRecords->pluck('tenant')
+            ->merge($allInvoices->pluck('tenant'))
+            ->filter()
+            ->unique('id')
+            ->values();
 
         $profiles = $tenants->map(function ($tenant) use ($rentRecords, $allInvoices) {
             $recs  = $rentRecords->where('tenant_id', $tenant->id);
@@ -155,23 +240,28 @@ class CrmAnalyticsLivewire extends Component
 
         $tenantProfiles = $this->sortDir === 'desc' ? $sorted->reverse()->values() : $sorted->values();
 
-        // ── KPIs (use all invoices regardless of client filters) ──
-        $allLandlordInvoices = Invoice::with('payments')->where('landlord_id', $landlordId)->get();
+        // ── KPIs (respect year filter, ignore other client filters) ──
+        $kpiInvoiceQuery = Invoice::with('payments')->where('landlord_id', $landlordId);
+        $this->applyYearToInvoices($kpiInvoiceQuery);
+        $allLandlordInvoices = $kpiInvoiceQuery->get();
         $totalRevenue        = $allLandlordInvoices->sum(fn($i) => floatval($i->amount) + floatval($i->vat));
         $totalCollected      = $allLandlordInvoices->flatMap->payments->sum('payed_amount');
         $totalOutstanding    = $totalRevenue - $totalCollected;
 
-        $allRentRecords = RentRecord::where('landlord_id', $landlordId)->get();
+        $kpiRentQuery = RentRecord::where('landlord_id', $landlordId);
+        $this->applyYearToContracts($kpiRentQuery);
+        $allRentRecords = $kpiRentQuery->get();
         $activeTenantsCount = $allRentRecords
             ->filter(fn($r) => Carbon::parse($r->end_date)->isFuture())
             ->pluck('tenant_id')->unique()->count();
 
-        return view('livewire.user.land-lord.crm.crm-analytics-livewire', compact(
-            'tenantProfiles',
-            'totalRevenue',
-            'totalCollected',
-            'totalOutstanding',
-            'activeTenantsCount',
-        ));
+        return view('livewire.user.land-lord.crm.crm-analytics-livewire', [
+            'tenantProfiles' => $tenantProfiles,
+            'totalRevenue' => $totalRevenue,
+            'totalCollected' => $totalCollected,
+            'totalOutstanding' => $totalOutstanding,
+            'activeTenantsCount' => $activeTenantsCount,
+            'availableYears' => $this->availableYears(),
+        ]);
     }
 }

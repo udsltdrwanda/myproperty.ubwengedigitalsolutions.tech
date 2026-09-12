@@ -10,7 +10,12 @@
                     </div>
                     <div>
                         <h1 class="text-2xl font-extrabold tracking-wide" style="color:#0b2545;">CRM Analytics</h1>
-                        <p class="text-xs font-semibold mt-0.5" style="color:#94a3b8;">Client billing performance, lease history & payment analysis</p>
+                        <p class="text-xs font-semibold mt-0.5" style="color:#94a3b8;">
+                            Client billing performance, lease history & payment analysis
+                            @if($year)
+                                · <span style="color:#f39200;">{{ $year }}</span>
+                            @endif
+                        </p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider" style="color:#94a3b8;">
@@ -63,7 +68,7 @@
             <div class="px-5 py-3 border-b border-slate-100 flex items-center gap-2" style="background:#f8fafc;">
                 <i class="fas fa-sliders-h text-xs" style="color:#003b70;"></i>
                 <span class="text-[11px] font-extrabold uppercase tracking-widest" style="color:#003b70;">Filters & Sorting</span>
-                @if($search || $invoiceStatus || $contractStatus || $paymentRate || $houseFilter)
+                @if($search || $invoiceStatus || $contractStatus || $paymentRate || $houseFilter || $year)
                     <span class="ml-auto inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full" style="background:rgba(243,146,0,0.1); color:#f39200;">
                         <i class="fas fa-circle text-[6px]"></i> Active
                     </span>
@@ -90,6 +95,19 @@
                                 </button>
                             @endif
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-wider mb-1.5" style="color:#94a3b8;">Filter by Year</label>
+                        <select wire:model.live="year"
+                            class="px-3 py-2.5 text-xs font-semibold border border-slate-200 rounded-xl transition duration-150 appearance-none pr-8"
+                            style="color:#1e293b; background:#fff; min-width:120px;"
+                            onfocus="this.style.borderColor='#003b70'" onblur="this.style.borderColor='#e2e8f0'">
+                            <option value="">All years</option>
+                            @foreach($availableYears as $availableYear)
+                                <option value="{{ $availableYear }}">{{ $availableYear }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     @php
@@ -153,6 +171,7 @@
 
                     <!-- Active chips -->
                     @foreach([
+                        ['val'=>$year,           'label'=>'Year: '.$year,          'clear'=>"year"],
                         ['val'=>$search,         'label'=>'"'.$search.'"',        'clear'=>"search"],
                         ['val'=>$invoiceStatus,  'label'=>$invoiceStatus,          'clear'=>"invoiceStatus"],
                         ['val'=>$contractStatus, 'label'=>ucfirst($contractStatus),'clear'=>"contractStatus"],
@@ -189,7 +208,10 @@
                     </div>
                     <div>
                         <h2 class="text-sm font-extrabold" style="color:#0b2545;">Client History</h2>
-                        <p class="text-[10px] font-semibold" style="color:#94a3b8;">Billing, contracts & payment rate per client</p>
+                        <p class="text-[10px] font-semibold" style="color:#94a3b8;">
+                            Billing, contracts & payment rate per client
+                            @if($year) for {{ $year }} @endif
+                        </p>
                     </div>
                 </div>
                 <span class="px-3 py-1.5 text-[10px] font-extrabold rounded-xl text-white" style="background:#003b70;">

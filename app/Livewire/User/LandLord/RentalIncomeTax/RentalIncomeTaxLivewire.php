@@ -6,6 +6,7 @@ use App\Models\District;
 use App\Models\Invoice;
 use App\Models\Property;
 use App\Models\House;
+use App\Models\RentRecord;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
 use Livewire\WithPagination;
@@ -50,7 +51,17 @@ class RentalIncomeTaxLivewire extends Component
             ->whereNotNull('start_date')
             ->selectRaw('YEAR(start_date) as y')
             ->distinct()
-            ->pluck('y')
+            ->pluck('y');
+
+        $fromContracts = RentRecord::query()
+            ->where('landlord_id', Auth::user()->landlord_id)
+            ->whereNotNull('start_date')
+            ->selectRaw('YEAR(start_date) as y')
+            ->distinct()
+            ->pluck('y');
+
+        $fromInvoices = $fromInvoices
+            ->merge($fromContracts)
             ->map(fn ($year) => (int) $year)
             ->filter(fn ($year) => $year >= 2000 && $year <= $current + 1);
 
@@ -109,11 +120,40 @@ class RentalIncomeTaxLivewire extends Component
         return $breakdown;
     }
 
+    private function invoiceAmountForHouse($house, $property): float
+    {
+        $landlordId = Auth::user()->landlord_id;
+        $unitIds = DB::table('property_units')->where('house_id', $house->id)->pluck('id');
+
+        return (float) Invoice::query()
+            ->where(function ($query) use ($landlordId, $property) {
+                $query->where('landlord_id', $landlordId)
+                    ->orWhere('property_id', $property->id);
+            })
+            ->where(function ($query) use ($unitIds, $property) {
+                $query->whereIn('unit_id', $unitIds)
+                    ->orWhere('property_id', $property->id);
+            })
+            ->where(function ($query) {
+                $query->where(function ($dates) {
+                    $dates->whereDate('start_date', '<=', $this->endDate)
+                        ->whereDate('end_date', '>=', $this->startDate);
+                })->orWhereHas('rentrecord', function ($contract) {
+                    $contract->whereDate('start_date', '<=', $this->endDate)
+                        ->whereDate('end_date', '>=', $this->startDate);
+                });
+            })
+            ->sum('amount');
+    }
+
     public function getDistrictHouseInvoiceData()
     {
-        $districts = District::with(['properties'])->get();
+        $landlordId = Auth::user()->landlord_id;
+        $districts = District::with(['properties' => function ($query) use ($landlordId) {
+            $query->where('landlord_id', $landlordId);
+        }])->get();
 
-        $districtsWithInvoices = $districts->map(function ($district) {
+        $districtsWithInvoices = $districts->map(function ($district) use ($landlordId) {
             $housesWithInvoices = collect();
             $districtTotal = 0;
             $Total = 0;
@@ -124,22 +164,12 @@ class RentalIncomeTaxLivewire extends Component
                 $totalBankInterest += $property->bankInterest ?? 0;
 
                 $houses = House::where('property_id', $property->id)
-                    ->join('properties', 'houses.property_id', '=', 'properties.id')
-                    ->where('properties.landlord_id', Auth::user()->landlord_id)
+                    ->whereHas('property', fn ($query) => $query->where('landlord_id', $landlordId))
                     ->withCount('units')
-                    ->select('houses.*')
                     ->get();
 
                 foreach ($houses as $house) {
-                    // Calculate total invoice amount for this house
-                    $invoiceAmount = DB::table('invoices')
-                        ->join('property_units', 'invoices.unit_id', '=', 'property_units.id')
-                        ->join('houses', 'property_units.house_id', '=', 'houses.id')
-                        ->where('houses.id', $house->id)
-                        ->where('invoices.landlord_id', Auth::user()->landlord_id)
-                        ->whereDate('invoices.start_date', '>=', $this->startDate)
-                        ->whereDate('invoices.end_date', '<=', $this->endDate)
-                        ->sum('invoices.amount');
+                    $invoiceAmount = $this->invoiceAmountForHouse($house, $property);
                     $housesWithInvoices->push([
                         'house' => $house,
                         'property_name' => $property->name,
